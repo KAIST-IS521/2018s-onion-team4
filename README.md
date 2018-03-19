@@ -23,7 +23,7 @@ There are two types of packet.
 ##### Handshake
 `| 0(uint8_t) | GithubID Length(uint32_t) | GithubIDLength(uint32_t) | GithubID(GithubIDLength) |
 PubkeyLength(uint32_t) | Pubkey(PubkeyLength)| # of connected node(uint32_t)
-| Node IP((uint32_t) * # of connected node`
+| Node IP((uint32_t) * # of connected node |`
 
 ##### Msg
 ```| 1(uint8_t) | TimeStamp(uint32_t) | Length(uint32_t) | Data(Length) |```
