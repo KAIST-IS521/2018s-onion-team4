@@ -13,16 +13,26 @@ Build & Run
 
 Architecture
 -----
-- MainTread > Server
-- Enc & Dec Thread
+- Main thread: Packet handling
+- Other threads: Enc & Dec
 
 Protocol
 -----
-MSG[1byte]
-- 0: Handshake <pre><code>[GithubID Length(4byte), GithubID, PubkeyLength, Pubkey, # of connected node & Node IPS]</pre></code>
-- 1: MSG <pre><code>[TimeStamp(4byte), Length(uint32_t), Data(Length)]</pre></code>
+There are two types of packet.
+
+##### Handshake
+`| 0(uint8_t) | GithubID Length(uint32_t) | GithubIDLength(uint32_t) | GithubID(GithubIDLength) |
+PubkeyLength(uint32_t) | Pubkey(PubkeyLength)| # of connected node(uint32_t)
+| Node IP((uint32_t) * # of connected node`
+
+##### Msg
+```| 1(uint8_t) | TimeStamp(uint32_t) | Length(uint32_t) | Data(Length) |```
 
 Team Member & Role
 -----
-- Node & Protocol : Minkyu Jung, Heeseok Kim
-- (Enc & Dec) & Additional feature : Hyunki Kim, Hongsik Kim
+| Name        | Role              |
+|-------------|-------------------|
+| Hyunki Kim  | PGP & Features    |
+| Hongsik Kim | PGP & Features    |
+| Heeseok Kim | Client & Protocol |
+| Minkyu Jung | Client & Protocol |
