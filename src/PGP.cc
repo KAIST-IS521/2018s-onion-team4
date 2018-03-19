@@ -2,5 +2,7 @@
 #include <unistd.h>
 
 PGPDecrypt::PGPDecrypt(char *prikey) {
-    PassPhrase = getpass("Enter passphrase: ");
+    do {
+        PassPhrase = getpass("Enter passphrase: ");
+    } while (CheckPassPhrase() != false);
 }

@@ -15,6 +15,7 @@ class PGPDecrypt
     private:
         char *PriKey;
         char *PassPhrase;
+        bool CheckPassPhrase(void); // check passphrase is valid.
     public:
         char *Decrypt(char *ct);
         PGPDecrypt(char *prikey);
