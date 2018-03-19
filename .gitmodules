@@ -1,0 +1,3 @@
+[submodule "src/SelectServer"]
+	path = src/SelectServer
+	url = https://github.com/hestati63/SelectServer
