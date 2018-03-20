@@ -18,26 +18,15 @@
     }               \
   while (0)
 
-void init_gpgme(gpgme_protocol_t proto);
-class PGPEncrypt
-{
-    private:
-        gpgme_ctx_t ctx;
-        char* PubKey;
-    public:
-        char* Encrypt(char *pt);
-        PGPEncrypt(char *pubkey);
-};
-
-class PGPDecrypt
-{
-    private:
-        gpgme_ctx_t ctx;
-        char* PriKey;
-        char *PassPhrase;
-        bool CheckPassPhrase(void); // check passphrase is valid.
-    public:
-        char* Decrypt(char *ct);
-        PGPDecrypt(char *prikey);
+class PGP{
+	private:
+		gpgme_ctx_t ctx;
+		gpgme_key_t prikey;
+		char* passphrase;
+	public:
+		PGP(char* prikey_path);
+		char* Encrypt(char* pt, char* pubkey);
+		char* Decrypt(char* ct);
+		bool Verify_Pass();
 };
 #endif
