@@ -7,7 +7,6 @@
 typedef enum {INPUT_ID, INPUT_PASS, INPUT_OK, INPUT_CANCEL} startInputFormState;
 
 const char *prompt = "[Onion] ";
-const char *user = "hestati63 @ [3CB44CA1]";
 
 WINDOW *mainWin;
 void colors() {
@@ -22,50 +21,9 @@ void colors() {
    init_pair(7, COLOR_GREEN, -1);
    init_pair(8, COLOR_WHITE, COLOR_RED);
    init_pair(9, COLOR_WHITE, COLOR_BLUE);
-   init_pair(10, COLOR_BLACK, COLOR_BLUE);
    init_pair(11, -1, COLOR_CYAN);
 }
 
-/*
-WINDOW *mainWin, *inputWin, *chatWin, *infoWin;
-WINDOW *topLine, *botLine;
-Draw chat box and window
-void drawChatWin() {
-    topLine = subwin(mainWin, 1, COLS, 0, 0);
-    botLine = subwin(mainWin, 1, COLS, LINES-2, 0);
-    wbkgd(topLine, COLOR_PAIR(9));
-    wbkgd(botLine, COLOR_PAIR(10));
-   mvwaddstr(botLine, 0, COLS - strlen(user), user);
-
-   chatWin = subwin(mainWin, LINES - 2, COLS, 1, 0);
-
-   mvwaddstr(topLine, 0, 0, " Onion Messenger");
-
-   // Enable text scrolling
-   scrollok(chatWin, TRUE);
-   wrefresh(chatWin);
-   wrefresh(topLine);
-   wrefresh(botLine);
-   wrefresh(mainWin);
-}
-
-void drawInputWin() {
-   // Create input box and window
-   inputWin = subwin(mainWin, 1, COLS, LINES-1, strlen(prompt));
-   mvwaddstr(mainWin, LINES-1, 0, prompt);
-   wrefresh(inputWin);
-   wrefresh(mainWin);
-}
-
-
-
-
-void initializeCurses() {
-   drawChatWin();
-   drawInputWin();
-
-}
-*/
 void end() {
     endwin();
 }
@@ -144,7 +102,6 @@ static char *inputBoxBuilder(char *id, int passlen, int state) {
         wcursyncup(passWin);
         wrefresh(passWin);
     }
-
 }
 
 void drawInputFormBox(void) {
@@ -263,12 +220,102 @@ struct inputForm *drawPassPhraseUI(char *msg) {
     return handleUserInfo();
 }
 
-/*
+WINDOW *inputWin, *chatWin, *infoLineWin;
+WINDOW *topLine, *botLine;
+
+void drawChatWin(char *user) {
+    topLine = subwin(mainWin, 1, COLS, 0, 0);
+    botLine = subwin(mainWin, 1, COLS, LINES-2, 0);
+    wbkgd(topLine, COLOR_PAIR(9));
+    wbkgd(botLine, COLOR_PAIR(9));
+    mvwaddstr(botLine, 0, COLS - strlen(user), user);
+
+   chatWin = subwin(mainWin, LINES - 2, COLS, 1, 0);
+
+   mvwaddstr(topLine, 0, 0, " Onion Messenger");
+
+   // Enable text scrolling
+   scrollok(chatWin, TRUE);
+   wrefresh(chatWin);
+   wrefresh(topLine);
+   wrefresh(botLine);
+   wrefresh(mainWin);
+}
+
+void drawInputWin() {
+   // Create input box and window
+   inputWin = subwin(mainWin, 1, COLS, LINES-1, 0);
+   mvwaddstr(inputWin, 0, 0, prompt);
+   wcursyncup(inputWin);
+   wrefresh(inputWin);
+   wmove(inputWin, 0, strlen(prompt));
+   wrefresh(inputWin);
+   wrefresh(mainWin);
+}
+
+static void buildInputLine(char *msg) {
+    if (msg) {
+        mvwaddstr(inputWin, 0, strlen(prompt), msg);
+        wmove(inputWin, 0, strlen(msg) + strlen(prompt));
+        wrefresh(inputWin);
+    }
+}
+
+char *handleInput()
+{
+    char *input = 0;
+    int len = 0;
+    int ch;
+    buildInputLine(input);
+    while ((ch = getch()) != '\n') {
+        // Backspace
+        if (ch == 8 || ch == 127 || ch == KEY_BACKSPACE) {
+            if (len > 0) {
+                input = (char *)realloc(input, --len + 1);
+                input[len] = 0;
+            }
+        } else if (ch == KEY_RESIZE) {
+            continue;
+        } else if (ch == KEY_LEFT) {
+        } else if (ch == KEY_RIGHT) {
+        } else if (ch == KEY_UP) {
+        } else if (ch == KEY_DOWN) {
+        } else if (ch != ERR) {
+            input = (char *)realloc(input, ++len + 1);
+            input[len-1] = ch & 0xff;
+            input[len] = 0;
+        }
+        buildInputLine(input);
+
+    }
+    return input;
+}
+
+void drawOnionChatUI(char *uid, char *keyid, void (*handler)(char *))
+{
+    char msg[] = "hestati @ [ABCDEFG]"; // TODO
+    drawChatWin(msg);
+    drawInputWin();
+    wcursyncup(inputWin);
+    wrefresh(inputWin);
+    while (true) {
+        char *userin = handleInput();
+        handler(userin);
+    }
+}
+
+void echo(char *a)
+{
+    endwin();
+    printf("%s\n", a);
+    exit(0);
+}
+
 int main()
 {
     initUI();
     auto pass = drawPassPhraseUI(NULL);
-    pass = drawPassPhraseUI("Wrong passphrase!");
+    clear();
+    drawOnionChatUI(0, 0, echo);
     endwin();
 }
-*/
