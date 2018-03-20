@@ -1,0 +1,13 @@
+FROM ubuntu:xenial
+MAINTAINER 2018s-IS561-Team4
+
+### Packages setup
+RUN DIST=xenial && \
+    sed -i 's/deb.debian.org/ftp.daumkakao.com/' /etc/apt/sources.list && \
+    apt-get update && \
+    apt-get install -y --no-install-recommends --no-install-suggests \
+    make git libgpgme11-dev libncurses-dev g++
+RUN rm -rf /var/lib/apt/lists/* && \
+    apt-get clean
+WORKDIR /root
+CMD ["/bin/bash"]
