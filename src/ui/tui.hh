@@ -5,4 +5,4 @@ void initUI(void);
 char *drawPassPhraseUI(void);
 void drawOnionChatUI(char *uid, char *keyid);
 
-#endif __UI__
+#endif
