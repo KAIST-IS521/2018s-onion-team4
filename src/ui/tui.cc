@@ -103,46 +103,53 @@ static void drawLogo(void) {
    wrefresh(LogoWin);
 }
 
-static char *inputBoxBuilder(int idlen, int passlen, int state) {
+static char *inputBoxBuilder(char *id, int passlen, int state) {
+    // Build id string
+    for (int i = 0; i < 30; i++) {
+        mvwaddstr(idWin, 0, 18+i, "_");
+    }
+    wrefresh(idWin);
+    if (id) {
+        mvwaddstr(idWin, 0, 18, id);
+        wrefresh(idWin);
+    }
+
+    // Build pw string
     for (int i = 0; i < 50; i++) {
         mvwaddstr(passWin, 0, 18+i, i < passlen ? "*" : "_");
     }
-    wmove(passWin, 0, 18+passlen);
     wrefresh(passWin);
 
-    mvwaddstr(okWin, 0, 16, "<OK>");
-    wrefresh(okWin);
-    mvwaddstr(cancelWin, 0, 14, "<Cancel>");
-    wrefresh(cancelWin);
-    switch (state) {
-        case INPUT_ID:
-            wmove(idWin, 0, idlen + 18);
-            wrefresh(idWin);
-            break;
-        case INPUT_PASS:
-            wmove(passWin, 0, passlen + 18);
-            wrefresh(passWin);
-            break;
-        case INPUT_OK:
-            wattron(okWin, COLOR_PAIR(11));
-            mvwaddstr(okWin, 0, 16, "<OK>");
-            wmove(okWin, 0, 16);
-            wattroff(okWin, COLOR_PAIR(11));
-            wrefresh(okWin);
-            break;
-        case INPUT_CANCEL:
-            wattron(cancelWin, COLOR_PAIR(11));
-            mvwaddstr(cancelWin, 0, 14, "<Cancel>");
-            wmove(cancelWin, 0, 14);
-            wattroff(cancelWin, COLOR_PAIR(11));
-            wrefresh(cancelWin);
-            break;
+    WINDOW *t = NULL;
+    if (state == INPUT_OK) {
+        t = okWin;
+    } else if (state == INPUT_CANCEL) {
+        t = cancelWin;
     }
+
+    if (t) wattron(t, COLOR_PAIR(11));
+    mvwaddstr(okWin, 0, 16, "<OK>");
+    mvwaddstr(cancelWin, 0, 14, "<Cancel>");
+    if (t) wcursyncup(t);
+    if (t) wattroff(t, COLOR_PAIR(11));
+    wrefresh(okWin);
+    wrefresh(cancelWin);
+
+    if (state == INPUT_ID) {
+        wmove(idWin, 0, id ? 18 + strlen(id) : 18);
+        wcursyncup(idWin);
+        wrefresh(idWin);
+    } else if (state == INPUT_PASS) {
+        wmove(passWin, 0, 18 + passlen);
+        wcursyncup(passWin);
+        wrefresh(passWin);
+    }
+
 }
 
 void drawInputFormBox(void) {
-    infoWinBox = subwin(mainWin, 11, 72, LINES/2+1, COLS/2 - 36);
-    infoWin = subwin(mainWin, 9, 68, LINES/2+2, COLS/2 - 35);
+    infoWinBox = subwin(mainWin, 12, 72, LINES/2+1, COLS/2 - 36);
+    infoWin = subwin(mainWin, 10, 68, LINES/2+2, COLS/2 - 35);
     box(infoWinBox, 0, 0);
     wrefresh(infoWinBox);
     wrefresh(infoWin);
@@ -161,16 +168,21 @@ struct inputForm *handleUserInfo() {
     int *ptrlen = &idlen;
     int ch;
 
-    wcursyncup(idWin);
-    inputBoxBuilder(0, 0, state);
-
+    inputBoxBuilder(id, 0, state);
     while ((ch = getch()) != '\n') {
         // Backspace
         if (ch == 8 || ch == 127 || ch == KEY_BACKSPACE) {
-            /* TODO
-            *len = *len ? *len - 1 : 0;
-            ptr = (char *)realloc(ptr, *len);
-            */
+            if (state == INPUT_ID) {
+                if (idlen > 0) {
+                    id = (char *)realloc(id, --idlen + 1);
+                    id[idlen] = 0;
+                }
+            } else if (state == INPUT_PASS) {
+                if (passlen > 0) {
+                    pass = (char *)realloc(pass, --passlen + 1);
+                    pass[passlen] = 0;
+                }
+            }
         } else if (ch == KEY_RESIZE) {
             continue;
         } else if (ch == KEY_LEFT) {
@@ -188,15 +200,12 @@ struct inputForm *handleUserInfo() {
             } else if (state == INPUT_PASS) {
                 state = INPUT_OK;
             } else if (state == INPUT_ID) {
-                wcursyncup(passWin);
                 state = INPUT_PASS;
             }
         } else if (ch == KEY_UP) {
             if (state == INPUT_OK || state == INPUT_CANCEL) {
-                wcursyncup(passWin);
                 state = INPUT_PASS;
             } else if (state == INPUT_PASS) {
-                wcursyncup(idWin);
                 state = INPUT_ID;
             }
         } else if (ch == KEY_DOWN) {
@@ -206,49 +215,60 @@ struct inputForm *handleUserInfo() {
                 state = INPUT_OK;
             }
         } else if (ch != ERR) {
-            /* TODO
-            *len = *len ? 
-            pass = (char *)realloc(pass, ++len);
-            pass[len-1] = ch & 0xff;
-            */
+            if (state == INPUT_ID && idlen < MAX_ID_LEN) {
+                id = (char *)realloc(id, ++idlen + 1);
+                id[idlen-1] = ch & 0xff;
+                id[idlen] = 0;
+            } else if(state == INPUT_PASS) {
+                pass = (char *)realloc(pass, ++passlen + 1);
+                pass[passlen-1] = ch & 0xff;
+                pass[passlen] = 0;
+            }
         }
-        if (passlen >= 50) {
-            inputBoxBuilder(idlen, (passlen+5) % 50, state);
-        } else {
-            inputBoxBuilder(idlen, passlen, state);
+        if (passlen < 48) {
+            inputBoxBuilder(id, passlen, state);
+        } else if(passlen >= 48) {
+            inputBoxBuilder(id, (passlen - 48) % 43 + 5, state);
         }
     }
-    if (state == 2) {
+    if (state == INPUT_CANCEL) {
         exit(0);
     }
+    struct inputForm *form = (struct inputForm *) malloc(sizeof(inputForm));
+    form->id = id;
+    form->pass = pass;
+    return form;
 }
 
-struct inputForm *drawPassPhraseUI(void) {
+struct inputForm *drawPassPhraseUI(char *msg) {
     drawLogo();
     drawInputFormBox();
 
-    idWin = derwin(infoWin, 1, 66, 4, 1);
-    passWin = derwin(infoWin, 1, 66, 6, 1);
-    okWin = derwin(infoWin, 1, 34, 8, 0);
-    cancelWin = derwin(infoWin, 1, 34, 8, 34);
+    idWin = derwin(infoWin, 1, 66, 5, 1);
+    passWin = derwin(infoWin, 1, 66, 7, 1);
+    okWin = derwin(infoWin, 1, 34, 9, 0);
+    cancelWin = derwin(infoWin, 1, 34, 9, 34);
     mvwaddstr(infoWin, 0, 2,
             "Please enter the user information to unlock " \
             "the OpenPGP secret key and connect onion messenger.");
+    if (msg) {
+        wattron(infoWin, COLOR_PAIR(4));
+        mvwaddstr(infoWin, 3, 2, msg);
+        wattroff(infoWin, COLOR_PAIR(4));
+    }
     mvwaddstr(idWin, 0, 0, "Enter Github ID:  " \
             "______________________________");
     mvwaddstr(passWin, 0, 0, "Enter Passphrase: ");
-    wmove(idWin, 0, 18);
-    wmove(passWin, 0, 18);
-    wrefresh(idWin);
-    wrefresh(passWin);
+    wrefresh(infoWin);
     return handleUserInfo();
 }
 
+/*
 int main()
 {
     initUI();
-    auto pass = drawPassPhraseUI();
-    pass = drawPassPhraseUI();
+    auto pass = drawPassPhraseUI(NULL);
+    pass = drawPassPhraseUI("Wrong passphrase!");
     endwin();
 }
-
+*/
