@@ -1,5 +1,5 @@
 CC=g++
-CCFLAGS=-std=c++11 -Wall
+CCFLAGS=-std=c++11 -Wall -lncurses
 SRC_DIR=src
 BUILD_DIR=.
 TARGET=OnionMessenger

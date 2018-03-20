@@ -2,15 +2,21 @@
 #define __UI__
 
 #define MAX_ID_LEN 30
+#include <iostream>
+#include "UIProvider.hh"
 
-struct inputForm
+using namespace std;
+
+namespace TUI
 {
-    char *id;
-    char *pass;
-};
-
-void initUI(void);
-struct inputForm *drawPassPhraseUI(void);
-void drawOnionChatUI(char *uid, char *keyid);
+    class TUIProvider : public UI::UIProvider
+    {
+        public:
+            pair<string, string> GetUserInfo(char *msg);
+            void UserInputLoop(void (*handler)(char *in));
+            TUIProvider();
+            ~TUIProvider();
+    };
+}
 
 #endif

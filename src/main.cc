@@ -1,3 +1,4 @@
+#include "OnionMessenger.hh"
 #include <cstdlib>
 #include <stdio.h>
 #include <unistd.h>
@@ -45,4 +46,5 @@ int main(int argc, char **argv) {
                 break;
         }
     }
+    auto onion = new OnionMessenger::OnionMessenger(useTUI, priv);
 }
