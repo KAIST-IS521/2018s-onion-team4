@@ -9,7 +9,7 @@ typedef enum {INPUT_ID, INPUT_PASS, INPUT_OK, INPUT_CANCEL} startInputFormState;
 const char *prompt = "[Onion] ";
 
 WINDOW *mainWin;
-void colors() {
+static void colors() {
    start_color();
    use_default_colors();
    init_pair(1, -1, -1);
@@ -24,7 +24,7 @@ void colors() {
    init_pair(11, -1, COLOR_CYAN);
 }
 
-void end() {
+static void end() {
     endwin();
 }
 // https://github.com/mgeitz/tbdchat/blob/master/client/chat_client.c
@@ -61,7 +61,7 @@ static void drawLogo(void) {
    wrefresh(LogoWin);
 }
 
-static char *inputBoxBuilder(char *id, int passlen, int state) {
+static void inputBoxBuilder(char *id, int passlen, int state) {
     // Build id string
     for (int i = 0; i < 30; i++) {
         mvwaddstr(idWin, 0, 18+i, "_");
@@ -104,7 +104,7 @@ static char *inputBoxBuilder(char *id, int passlen, int state) {
     }
 }
 
-void drawInputFormBox(void) {
+static void drawInputFormBox(void) {
     infoWinBox = subwin(mainWin, 12, 72, LINES/2+1, COLS/2 - 36);
     infoWin = subwin(mainWin, 10, 68, LINES/2+2, COLS/2 - 35);
     box(infoWinBox, 0, 0);
@@ -112,7 +112,7 @@ void drawInputFormBox(void) {
     wrefresh(infoWin);
 }
 
-struct inputForm *handleUserInfo() {
+static struct inputForm *handleUserInfo() {
     int state = INPUT_ID;
 
     int idlen = 0;
@@ -120,9 +120,6 @@ struct inputForm *handleUserInfo() {
 
     int passlen = 0;
     char *pass = 0;
-
-    char *ptr = id;
-    int *ptrlen = &idlen;
     int ch;
 
     inputBoxBuilder(id, 0, state);
@@ -171,7 +168,7 @@ struct inputForm *handleUserInfo() {
             } else if (state == INPUT_PASS) {
                 state = INPUT_OK;
             }
-        } else if (ch != ERR) {
+        } else if (ch >= 0 && ch < 0x100) {
             if (state == INPUT_ID && idlen < MAX_ID_LEN) {
                 id = (char *)realloc(id, ++idlen + 1);
                 id[idlen-1] = ch & 0xff;
@@ -223,7 +220,7 @@ struct inputForm *drawPassPhraseUI(char *msg) {
 WINDOW *inputWin, *chatWin, *infoLineWin;
 WINDOW *topLine, *botLine;
 
-void drawChatWin(char *user) {
+static void drawChatWin(char *user) {
     topLine = subwin(mainWin, 1, COLS, 0, 0);
     botLine = subwin(mainWin, 1, COLS, LINES-2, 0);
     wbkgd(topLine, COLOR_PAIR(9));
@@ -242,7 +239,7 @@ void drawChatWin(char *user) {
    wrefresh(mainWin);
 }
 
-void drawInputWin() {
+static void drawInputWin() {
    // Create input box and window
    inputWin = subwin(mainWin, 1, COLS, LINES-1, 0);
    mvwaddstr(inputWin, 0, 0, prompt);
@@ -261,7 +258,7 @@ static void buildInputLine(char *msg) {
     }
 }
 
-char *handleInput()
+static char *handleInput()
 {
     char *input = 0;
     int len = 0;
@@ -304,6 +301,7 @@ void drawOnionChatUI(char *uid, char *keyid, void (*handler)(char *))
     }
 }
 
+/* Usage example: should be in thread!
 void echo(char *a)
 {
     endwin();
@@ -319,3 +317,4 @@ int main()
     drawOnionChatUI(0, 0, echo);
     endwin();
 }
+*/
