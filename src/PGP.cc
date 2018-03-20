@@ -17,7 +17,7 @@ void init_gpgme(gpgme_protocol_t proto){
 
   err = gpgme_engine_check_version (proto);
   fail_if_err (err);
-  
+
 }
 
 char* Data2String(gpgme_data_t data){
@@ -55,17 +55,38 @@ char* PGPDecrypt::Decrypt(char* ct){
   gpgme_import_result_t import_result;
   gpgme_error_t err;
   gpgme_key_t key[2] = {NULL, NULL};
-  
+  char* temp="\0";
+  char pass_temp[100]= "\0";
+  void * cb = NULL;
+  int flag=0;
+  int count=2;
   err = gpgme_data_new_from_mem(&keydata, PriKey, strlen(PriKey), 1);
   fail_if_err(err);
 
   err = gpgme_op_import(ctx, keydata);
   fail_if_err(err);
-  
+
   import_result = gpgme_op_import_result(ctx);
   err = gpgme_get_key(ctx, import_result->imports->fpr, &key[0], 1);
   fail_if_err(err);
-  
+
+  gpgme_get_passphrase_cb(ctx,NULL,&cb);
+  while(flag==0){
+    strcpy(pass_temp,(char*)cb);
+    temp = getpass("Enter passphrase: ");
+    if(strcmp(pass_temp,temp)==0)
+    {
+      flag=1;
+    }
+    else{
+      strcpy((char*)cb,pass_temp);
+      printf("PassPhrase is wrong (%d/3)\n",count);
+      if(count==0)
+        exit(0);
+      count-=1;
+    }
+  }
+
   gpgme_data_new_from_mem(&cipher_text, ct, strlen(ct), 1);
 	gpgme_data_new(&plain_text);
   gpgme_op_decrypt(ctx, cipher_text, plain_text);
@@ -79,7 +100,7 @@ char* PGPEncrypt::Encrypt(char* pt){
   gpgme_data_t cipher_text, plain_text;
   gpgme_import_result_t import_result;
   gpgme_key_t key[2] = {NULL, NULL};
-  
+
   err = gpgme_data_new_from_mem(&keydata, PubKey, strlen(PubKey), 1);
   fail_if_err(err);
 
@@ -89,12 +110,12 @@ char* PGPEncrypt::Encrypt(char* pt){
   import_result = gpgme_op_import_result(ctx);
   err = gpgme_get_key(ctx, import_result->imports->fpr, &key[0], 0);
   fail_if_err(err);
-  
+
   gpgme_data_new_from_mem(&plain_text, pt, strlen(pt), 0);
 	gpgme_data_new(&cipher_text);
   err = gpgme_op_encrypt(ctx, key, GPGME_ENCRYPT_ALWAYS_TRUST, plain_text, cipher_text);
   fail_if_err(err);
-	
+
   char* result = Data2String(cipher_text);
   return result;
 }
