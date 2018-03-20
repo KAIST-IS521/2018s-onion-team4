@@ -2,7 +2,9 @@
 #include <cstring>
 #include <unistd.h>
 #include <ncurses.h>
-#include "ui.hh"
+#include "tui.hh"
+
+typedef enum {INPUT_ID, INPUT_PASS, INPUT_OK, INPUT_CANCEL} startInputFormState;
 
 const char *prompt = "[Onion] ";
 const char *user = "hestati63 @ [3CB44CA1]";
@@ -78,10 +80,10 @@ void initUI(void) {
     cbreak();
     keypad(mainWin, TRUE);
     colors();
-   atexit(end);
+    atexit(end);
 }
 
-WINDOW *LogoWin, *passWin, *okWin, *cancelWin, *infoWin;
+WINDOW *LogoWin, *passWin, *okWin, *cancelWin, *infoWin, *infoWinBox, *idWin;
 static void drawLogo(void) {
    LogoWin = subwin(mainWin, LINES/2, COLS, 0, 0);
    mvwaddstr(LogoWin, LINES/2 - 9, COLS/2 - 30,
@@ -101,28 +103,34 @@ static void drawLogo(void) {
    wrefresh(LogoWin);
 }
 
-static char *inputBoxBuilder(int len, int state) {
+static char *inputBoxBuilder(int idlen, int passlen, int state) {
     for (int i = 0; i < 50; i++) {
-        mvwaddstr(passWin, 0, 18+i, i < len ? "*" : "_");
+        mvwaddstr(passWin, 0, 18+i, i < passlen ? "*" : "_");
     }
-    wmove(passWin, 0, len + 18);
+    wmove(passWin, 0, 18+passlen);
+    wrefresh(passWin);
+
     mvwaddstr(okWin, 0, 16, "<OK>");
     wrefresh(okWin);
     mvwaddstr(cancelWin, 0, 14, "<Cancel>");
     wrefresh(cancelWin);
     switch (state) {
-        case 0:
-            wmove(passWin, 0, len + 18);
+        case INPUT_ID:
+            wmove(idWin, 0, idlen + 18);
+            wrefresh(idWin);
+            break;
+        case INPUT_PASS:
+            wmove(passWin, 0, passlen + 18);
             wrefresh(passWin);
             break;
-        case 1:
+        case INPUT_OK:
             wattron(okWin, COLOR_PAIR(11));
             mvwaddstr(okWin, 0, 16, "<OK>");
             wmove(okWin, 0, 16);
             wattroff(okWin, COLOR_PAIR(11));
             wrefresh(okWin);
             break;
-        case 2:
+        case INPUT_CANCEL:
             wattron(cancelWin, COLOR_PAIR(11));
             mvwaddstr(cancelWin, 0, 14, "<Cancel>");
             wmove(cancelWin, 0, 14);
@@ -132,63 +140,114 @@ static char *inputBoxBuilder(int len, int state) {
     }
 }
 
-static char *handlePasswordInput() {
-    int len = 0;
-    int state = 0;
+void drawInputFormBox(void) {
+    infoWinBox = subwin(mainWin, 11, 72, LINES/2+1, COLS/2 - 36);
+    infoWin = subwin(mainWin, 9, 68, LINES/2+2, COLS/2 - 35);
+    box(infoWinBox, 0, 0);
+    wrefresh(infoWinBox);
+    wrefresh(infoWin);
+}
+
+struct inputForm *handleUserInfo() {
+    int state = INPUT_ID;
+
+    int idlen = 0;
+    char *id = 0;
+
+    int passlen = 0;
     char *pass = 0;
+
+    char *ptr = id;
+    int *ptrlen = &idlen;
     int ch;
 
-    wcursyncup(passWin);
-    inputBoxBuilder(len, state);
+    wcursyncup(idWin);
+    inputBoxBuilder(0, 0, state);
 
     while ((ch = getch()) != '\n') {
         // Backspace
         if (ch == 8 || ch == 127 || ch == KEY_BACKSPACE) {
-            len = len ? len-1 : 0;
-            pass = (char *)realloc(pass, len);
+            /* TODO
+            *len = *len ? *len - 1 : 0;
+            ptr = (char *)realloc(ptr, *len);
+            */
         } else if (ch == KEY_RESIZE) {
             continue;
         } else if (ch == KEY_LEFT) {
-            state = state ? state-1 : 0;
+            if (state == INPUT_CANCEL) {
+                state = INPUT_OK;
+            } else if (state == INPUT_OK) {
+                state = INPUT_PASS;
+            } else if (state == INPUT_PASS) {
+                wcursyncup(idWin);
+                state = INPUT_ID;
+            }
         } else if (ch == KEY_RIGHT) {
-            state = state == 2 ? 2 : state + 1;
+            if (state == INPUT_OK) {
+                state = INPUT_CANCEL;
+            } else if (state == INPUT_PASS) {
+                state = INPUT_OK;
+            } else if (state == INPUT_ID) {
+                wcursyncup(passWin);
+                state = INPUT_PASS;
+            }
         } else if (ch == KEY_UP) {
-            state = state ? 0 : state;
+            if (state == INPUT_OK || state == INPUT_CANCEL) {
+                wcursyncup(passWin);
+                state = INPUT_PASS;
+            } else if (state == INPUT_PASS) {
+                wcursyncup(idWin);
+                state = INPUT_ID;
+            }
         } else if (ch == KEY_DOWN) {
-            state = state == 0 ? 1 : state;
+            if (state == INPUT_ID) {
+                state = INPUT_PASS;
+            } else if (state == INPUT_PASS) {
+                state = INPUT_OK;
+            }
         } else if (ch != ERR) {
+            /* TODO
+            *len = *len ? 
             pass = (char *)realloc(pass, ++len);
             pass[len-1] = ch & 0xff;
+            */
         }
-        if (len >= 50) {
-            inputBoxBuilder((len+5) % 50, state);
+        if (passlen >= 50) {
+            inputBoxBuilder(idlen, (passlen+5) % 50, state);
         } else {
-            inputBoxBuilder(len, state);
+            inputBoxBuilder(idlen, passlen, state);
         }
     }
     if (state == 2) {
         exit(0);
     }
-    return pass;
 }
 
-char *drawPassPhraseUI(void) {
+struct inputForm *drawPassPhraseUI(void) {
     drawLogo();
-    infoWin = subwin(mainWin, 9, 72, LINES/2+1, COLS/2 - 36);
-    passWin = derwin(infoWin, 1, 68, 5, 2);
-    okWin = derwin(infoWin, 1, 35, 7, 1);
-    cancelWin = derwin(infoWin, 1, 35, 7, 36);
-    box(infoWin, 0, 0);
-    mvwaddstr(infoWin, 1, 2,
-            "Please enter the passphrase to unlock the OpenPGP secret key:");
+    drawInputFormBox();
+
+    idWin = derwin(infoWin, 1, 66, 4, 1);
+    passWin = derwin(infoWin, 1, 66, 6, 1);
+    okWin = derwin(infoWin, 1, 34, 8, 0);
+    cancelWin = derwin(infoWin, 1, 34, 8, 34);
+    mvwaddstr(infoWin, 0, 2,
+            "Please enter the user information to unlock " \
+            "the OpenPGP secret key and connect onion messenger.");
+    mvwaddstr(idWin, 0, 0, "Enter Github ID:  " \
+            "______________________________");
     mvwaddstr(passWin, 0, 0, "Enter Passphrase: ");
-    return handlePasswordInput();
+    wmove(idWin, 0, 18);
+    wmove(passWin, 0, 18);
+    wrefresh(idWin);
+    wrefresh(passWin);
+    return handleUserInfo();
 }
 
 int main()
 {
     initUI();
-    char *pass = drawPassPhraseUI();
+    auto pass = drawPassPhraseUI();
     pass = drawPassPhraseUI();
     endwin();
 }
