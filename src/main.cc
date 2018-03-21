@@ -47,6 +47,12 @@ int main(int argc, char **argv) {
                 break;
         }
     }
+    if (priv.empty() || pub.empty())
+        usage(argv[0]);
+
+    PGP::initGPG();
+
     auto onion =
-        new OnionMessenger::OnionMessenger(useTUI, "./user.pub", "./user.asc");
+        new OnionMessenger::OnionMessenger(useTUI, priv, pub);
+    onion->Loop();
 }
