@@ -13,7 +13,10 @@ namespace TUI
     {
         public:
             pair<string, string> GetUserInfo(string uid, string info, char *msg);
-            void UserInputLoop(void (*handler)(char *in, void *aux), void *aux);
+            void UserInputLoop(string uid, string keyid,
+                    void (*handler)(char *, void *), void *aux);
+
+            // add Lock!
             void PushMessage(char *msg);
             void PushError(char *msg);
             TUIProvider();

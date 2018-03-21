@@ -221,7 +221,7 @@ namespace TUIImplement {
 
         if (msg) {
             wattron(infoWin, COLOR_PAIR(4));
-            mvwaddstr(infoWin, 4, 2, msg);
+            mvwaddstr(infoWin, 4, 1, msg);
             wattroff(infoWin, COLOR_PAIR(4));
         }
         mvwaddstr(idWin, 0, 0, "Enter Github ID:  " \
@@ -311,9 +311,11 @@ namespace TUIImplement {
         return input;
     }
 
-    void drawOnionChatUI(char *uid, char *keyid,
+    void drawOnionChatUI(const char *uid, const char *keyid,
             void (*handler)(char *, void *), void *aux)
     {
+        wclear(mainWin);
+        wrefresh(mainWin);
         char msg[100];
         memset(msg, 0, 100);
         snprintf(msg, 100, "%s @ [%s]", uid, keyid);
@@ -353,9 +355,9 @@ namespace TUI
         return pair<string, string>(id, pass);
     }
 
-    void TUIProvider::UserInputLoop(void (*handler)(char *, void *),
-                                    void *aux) {
-        TUIImplement::drawOnionChatUI(0, 0, handler, aux);
+    void TUIProvider::UserInputLoop(string uid, string keyid,
+            void (*handler)(char *, void *), void *aux) {
+        TUIImplement::drawOnionChatUI(uid.c_str(), keyid.c_str(), handler, aux);
     }
 
     void TUIProvider::PushMessage(char *msg) {
