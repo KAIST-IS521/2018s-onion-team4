@@ -35,7 +35,6 @@ namespace PGP {
             void InitPrikey(string prikey);
             void InitPubkey(string pubkey);
             void InitCTX();
-						void InitPassPhrase();
 						void setPass();
         public:
             PGP(string pubkey, string prikey);

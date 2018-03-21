@@ -68,7 +68,6 @@ namespace PGP {
 
 	void PGP::InitCTX(void) {
 		gpgme_error_t err;
-
 		err = gpgme_new(&ctx);
 		fail_if_err(err);
 		gpgme_set_pinentry_mode(ctx, GPGME_PINENTRY_MODE_LOOPBACK);
@@ -80,7 +79,7 @@ namespace PGP {
 		InitCTX();
 		InitPubkey(pubkey);
 		InitPrikey(prikey);
-		setPass();
+		//setPass();
 	}
 
 	// This only provide enc
@@ -105,11 +104,6 @@ namespace PGP {
 		return passphrase_info;
 	}
 
-	void PGP::setPass(){
-		do{
-			passphrase = getpass("Enter passphrase :");
-		}while(!Verify_Pass(passphrase));
-	}
 
 	bool PGP::Verify_Pass(const char *pass){
 		if (pass) {

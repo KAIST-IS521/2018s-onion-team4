@@ -9,7 +9,7 @@
 
 using namespace std;
 void usage(char *progname) {
-    cerr << "Usage: TODO" << endl;
+    cout << "Usage: " << progname << " [-n node] [-p pubkeypath] [-s prikeypath]" << endl;
     exit(0);
 }
 
