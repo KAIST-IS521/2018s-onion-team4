@@ -199,7 +199,8 @@ namespace TUIImplement {
         return form;
     }
 
-    struct inputForm *drawPassPhraseUI(char *msg) {
+    struct inputForm *drawPassPhraseUI(const char *uid,
+                                       const char *info, char *msg) {
         drawLogo();
         drawInputFormBox();
 
@@ -208,11 +209,19 @@ namespace TUIImplement {
         okWin = derwin(infoWin, 1, 34, 9, 0);
         cancelWin = derwin(infoWin, 1, 34, 9, 34);
         mvwaddstr(infoWin, 0, 2,
-                "Please enter the user information to unlock " \
-                "the OpenPGP secret key and connect onion messenger.");
+                "Please enter the Github ID and user information to unlock " \
+                "the OpenPGP secret key for user:");
+
+        char *s = strstr((char *)uid, " ");
+        mvwaddstr(infoWin, 2, 2, "\"");
+        mvwaddstr(infoWin, 2, 3, s+1);
+        mvwaddstr(infoWin, 2, 3 + strlen(s+1), "\", ");
+        mvwaddstr(infoWin, 2, 6 + strlen(s+1), "ID ");
+        mvwaddnstr(infoWin, 2, 9 + strlen(s+1), info, 8);
+
         if (msg) {
             wattron(infoWin, COLOR_PAIR(4));
-            mvwaddstr(infoWin, 3, 2, msg);
+            mvwaddstr(infoWin, 4, 2, msg);
             wattroff(infoWin, COLOR_PAIR(4));
         }
         mvwaddstr(idWin, 0, 0, "Enter Github ID:  " \
@@ -232,7 +241,7 @@ namespace TUIImplement {
         wbkgd(botLine, COLOR_PAIR(9));
         mvwaddstr(botLine, 0, COLS - strlen(user), user);
 
-       chatWin = subwin(mainWin, LINES - 2, COLS, 1, 0);
+       chatWin = subwin(mainWin, LINES - 3, COLS, 1, 0);
 
        mvwaddstr(topLine, 0, 0, " Onion Messenger");
 
@@ -242,6 +251,14 @@ namespace TUIImplement {
        wrefresh(topLine);
        wrefresh(botLine);
        wrefresh(mainWin);
+    }
+
+    static void writeChat(char *data) {
+        wprintw(chatWin, "%s\n", data);
+        wrefresh(chatWin);
+        wcursyncup(inputWin);
+        wrefresh(inputWin);
+        beep();
     }
 
     static void drawInputWin() {
@@ -256,11 +273,13 @@ namespace TUIImplement {
     }
 
     static void buildInputLine(char *msg) {
+        wclear(inputWin);
+        mvwaddstr(inputWin, 0, 0, prompt);
         if (msg) {
             mvwaddstr(inputWin, 0, strlen(prompt), msg);
             wmove(inputWin, 0, strlen(msg) + strlen(prompt));
-            wrefresh(inputWin);
         }
+        wrefresh(inputWin);
     }
 
     static char *handleInput()
@@ -288,12 +307,12 @@ namespace TUIImplement {
                 input[len] = 0;
             }
             buildInputLine(input);
-
         }
         return input;
     }
 
-    void drawOnionChatUI(char *uid, char *keyid, void (*handler)(char *))
+    void drawOnionChatUI(char *uid, char *keyid,
+            void (*handler)(char *, void *), void *aux)
     {
         char msg[100];
         memset(msg, 0, 100);
@@ -304,7 +323,10 @@ namespace TUIImplement {
         wrefresh(inputWin);
         while (true) {
             char *userin = handleInput();
-            handler(userin);
+            if (userin) {
+                handler(userin, aux);
+                free(userin);
+            }
         }
     }
 }
@@ -319,9 +341,11 @@ namespace TUI
         TUIImplement::end();
     }
 
-    pair<string, string> TUIProvider::GetUserInfo(char *msg) {
-        auto info = TUIImplement::drawPassPhraseUI(msg);
-        string id = info->id;
+    pair<string, string> TUIProvider::GetUserInfo(string uid, string infos,
+                                                  char *msg) {
+        auto info =
+            TUIImplement::drawPassPhraseUI(uid.c_str(), infos.c_str(), msg);
+        string id = info->id ? info->id : "";
         string pass = info->pass ? info->pass : "";
         if (info->id) free(info->id);
         if (info->pass) free(info->pass);
@@ -329,7 +353,15 @@ namespace TUI
         return pair<string, string>(id, pass);
     }
 
-    void TUIProvider::UserInputLoop(void (*handler)(char *in)) {
-        TUIImplement::drawOnionChatUI(0, 0, handler);
+    void TUIProvider::UserInputLoop(void (*handler)(char *, void *),
+                                    void *aux) {
+        TUIImplement::drawOnionChatUI(0, 0, handler, aux);
+    }
+
+    void TUIProvider::PushMessage(char *msg) {
+        TUIImplement::writeChat(msg);
+    }
+
+    void TUIProvider::PushError(char *msg) {
     }
 }

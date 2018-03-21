@@ -12,8 +12,10 @@ namespace TUI
     class TUIProvider : public UI::UIProvider
     {
         public:
-            pair<string, string> GetUserInfo(char *msg);
-            void UserInputLoop(void (*handler)(char *in));
+            pair<string, string> GetUserInfo(string uid, string info, char *msg);
+            void UserInputLoop(void (*handler)(char *in, void *aux), void *aux);
+            void PushMessage(char *msg);
+            void PushError(char *msg);
             TUIProvider();
             ~TUIProvider();
     };

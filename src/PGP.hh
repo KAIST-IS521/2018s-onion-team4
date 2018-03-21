@@ -25,9 +25,11 @@ namespace PGP {
         private:
             string pubArmored;
             string priArmored;
+            string uid_hint;
+            string passphrase_info;
 
             gpgme_ctx_t ctx;
-            gpgme_key_t prikey;
+            gpgme_key_t privkey;
             char* passphrase;
             void get_passphrase_info();
             void InitPrikey(string prikey);
@@ -39,7 +41,11 @@ namespace PGP {
             PGP(string pubkey);
             char* Encrypt(char* pt);
             char* Decrypt(char* ct);
-            bool Verify_Pass();
+            bool Verify_Pass(const char *pass);
+            void setUid(string uid);
+            string getUid();
+            void setPassInfo(string passinfo);
+            string getPassInfo();
     };
 }
 #endif

@@ -1,4 +1,5 @@
 #include "OnionMessenger.hh"
+#include "PGP.hh"
 #include <cstdlib>
 #include <stdio.h>
 #include <unistd.h>
@@ -46,5 +47,6 @@ int main(int argc, char **argv) {
                 break;
         }
     }
-    auto onion = new OnionMessenger::OnionMessenger(useTUI, priv);
+    auto onion =
+        new OnionMessenger::OnionMessenger(useTUI, "./user.pub", "./user.asc");
 }
