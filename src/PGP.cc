@@ -47,7 +47,8 @@ namespace PGP {
         gpgme_error_t err;
         gpgme_data_t keydata;
         gpgme_import_result_t import_result;
-        err = gpgme_data_new_from_mem(&keydata, priArmored.c_str(), priArmored.size(), 0);
+        err = gpgme_data_new_from_mem(&keydata,
+                priArmored.c_str(), priArmored.size(), 0);
         fail_if_err(err);
 
         err = gpgme_op_import(ctx, keydata);
@@ -90,7 +91,7 @@ namespace PGP {
         uid_hint = uid;
     }
 
-    string PGP::getUid() {
+    string PGP::getUid(void) {
         return uid_hint;
     }
 
@@ -98,66 +99,65 @@ namespace PGP {
         passphrase_info = passinfo;
     }
 
-    string PGP::getPassInfo() {
+    string PGP::getPassInfo(void) {
         return passphrase_info;
     }
 
-
-bool PGP::Verify_Pass(const char *pass){
-    if (pass) {
-        passphrase = strdup(pass);
-        gpgme_set_passphrase_cb(ctx, passphrase_cb, passphrase);
-        const char *t = "Verify Pass\n";
-        char *res = Decrypt(Encrypt((char *)t));
-        if (res && !strcmp(res, t)) {
-            return true;
-        } else {
-            free(passphrase);
-            passphrase = 0;
-            return false;
+    bool PGP::Verify_Pass(const char *pass) {
+        if (pass) {
+            passphrase = strdup(pass);
+            gpgme_set_passphrase_cb(ctx, passphrase_cb, passphrase);
+            const char *t = "Verify Pass\n";
+            char *res = Decrypt(Encrypt((char *)t));
+            if (res && !strcmp(res, t)) {
+                return true;
+            } else {
+                free(passphrase);
+                passphrase = 0;
+                return false;
+            }
         }
+        return false;
     }
-    return false;
-}
 
-char* PGP::Decrypt(char* ct){
-    gpgme_data_t cipher_text, plain_text;
+    char* PGP::Decrypt(char* ct) {
+        gpgme_data_t cipher_text, plain_text;
 
-    gpgme_data_new_from_mem(&cipher_text, ct, strlen(ct), 1);
-    gpgme_data_new(&plain_text);
-    gpgme_op_decrypt(ctx, cipher_text, plain_text);
+        gpgme_data_new_from_mem(&cipher_text, ct, strlen(ct), 1);
+        gpgme_data_new(&plain_text);
+        gpgme_op_decrypt(ctx, cipher_text, plain_text);
 
-    size_t size;
-    char* result = gpgme_data_release_and_get_mem(plain_text, &size);
-    return result;
-}
+        size_t size;
+        return gpgme_data_release_and_get_mem(plain_text, &size);
+    }
 
-char* PGP::Encrypt(char* pt){
-    gpgme_error_t err;
-    gpgme_data_t keydata;
-    gpgme_data_t cipher_text, plain_text;
-    gpgme_import_result_t import_result;
-    gpgme_key_t key[2] = {NULL, NULL};
+    char* PGP::Encrypt(char* pt) {
+        gpgme_error_t err;
+        gpgme_data_t keydata;
+        gpgme_data_t cipher_text, plain_text;
+        gpgme_import_result_t import_result;
+        gpgme_key_t key[2] = {NULL, NULL};
 
-    err = gpgme_data_new_from_mem(&keydata, pubArmored.c_str(), pubArmored.size(), 0);
-    fail_if_err(err);
+        err = gpgme_data_new_from_mem(&keydata,
+                pubArmored.c_str(), pubArmored.size(), 0);
+        fail_if_err(err);
 
-    err = gpgme_op_import(ctx, keydata);
-    fail_if_err(err);
+        err = gpgme_op_import(ctx, keydata);
+        fail_if_err(err);
 
-    import_result = gpgme_op_import_result(ctx);
-    err = gpgme_get_key(ctx, import_result->imports->fpr, &key[0], 0);
-    fail_if_err(err);
+        import_result = gpgme_op_import_result(ctx);
+        err = gpgme_get_key(ctx, import_result->imports->fpr, &key[0], 0);
+        fail_if_err(err);
 
-    err = gpgme_data_new_from_mem(&plain_text, pt, strlen(pt), 0);
-    fail_if_err(err);
+        err = gpgme_data_new_from_mem(&plain_text, pt, strlen(pt), 0);
+        fail_if_err(err);
 
-    gpgme_data_new(&cipher_text);
-    err = gpgme_op_encrypt(ctx, key, GPGME_ENCRYPT_ALWAYS_TRUST, plain_text, cipher_text);
-    fail_if_err(err);
+        gpgme_data_new(&cipher_text);
+        err = gpgme_op_encrypt(ctx, key,
+                GPGME_ENCRYPT_ALWAYS_TRUST, plain_text, cipher_text);
+        fail_if_err(err);
 
-    size_t size;
-    char* result = gpgme_data_release_and_get_mem(cipher_text, &size);
-    return result;
-}
+        size_t size;
+        return result = gpgme_data_release_and_get_mem(cipher_text, &size);
+    }
 }

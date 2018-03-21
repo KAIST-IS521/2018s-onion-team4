@@ -42,9 +42,9 @@ namespace PGP {
             char* Decrypt(char* ct);
             bool Verify_Pass(const char *pass);
             void setUid(string uid);
-            string getUid();
+            string getUid(void);
             void setPassInfo(string passinfo);
-            string getPassInfo();
+            string getPassInfo(void);
     };
 }
 #endif
