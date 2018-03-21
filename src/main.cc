@@ -9,7 +9,8 @@
 
 using namespace std;
 void usage(char *progname) {
-    cout << "Usage: " << progname << " [-n node] [-p pubkeypath] [-s prikeypath]" << endl;
+    cout << "Usage: " << progname
+         << " [-n node] [-p pubkeypath] [-s prikeypath]" << endl;
     exit(0);
 }
 

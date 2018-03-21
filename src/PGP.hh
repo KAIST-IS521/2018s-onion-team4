@@ -27,19 +27,19 @@ namespace PGP {
             string priArmored;
             string uid_hint;
             string passphrase_info;
-
             gpgme_ctx_t ctx;
             gpgme_key_t privkey;
             char* passphrase;
+
             void get_passphrase_info(void);
             void InitPrikey(string prikey);
             void InitPubkey(string pubkey);
             void InitCTX();
-						void setPass();
+            void setPass();
         public:
             PGP(string pubkey, string prikey);
             PGP(string pubkey);
-						string Encrypt(string pt);
+            string Encrypt(string pt);
             string Decrypt(string ct);
             bool Verify_Pass(const char *pass);
             void setUid(string uid);
