@@ -12,10 +12,11 @@ class OnionMessenger
     {
         private:
             UI::UIProvider *provider;
-            void CLI(void);
+            PGP::PGP *pgp;
+            void LoginUser(void);
         public:
             void Loop(void);
-            OnionMessenger(bool usetui, string priv);
+            OnionMessenger(bool usetui, string priv, string pub);
     };
 }
 #endif
