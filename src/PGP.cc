@@ -21,7 +21,7 @@ namespace PGP {
         return GPG_ERR_NO_ERROR;
     }
 
-    void __attribute((constructor)) initGPG() {
+    void initGPG(void) {
         cout << "Initalizing GPGME...";
         cout.flush();
         gpg_error_t err;
@@ -33,7 +33,7 @@ namespace PGP {
         cout << " Done." << endl;
     }
 
-    void PGP::get_passphrase_info() {
+    void PGP::get_passphrase_info(void) {
         gpgme_set_passphrase_cb(ctx, get_passphrase_info_cb, (void *)this);
         this->Decrypt(this->Encrypt((char *)"a"));
     }
@@ -65,7 +65,7 @@ namespace PGP {
                     std::istreambuf_iterator<char>());
     }
 
-    void PGP::InitCTX() {
+    void PGP::InitCTX(void) {
         gpgme_error_t err;
 
         err = gpgme_new(&ctx);
@@ -158,6 +158,6 @@ namespace PGP {
         fail_if_err(err);
 
         size_t size;
-        return result = gpgme_data_release_and_get_mem(cipher_text, &size);
+        return gpgme_data_release_and_get_mem(cipher_text, &size);
     }
 }
