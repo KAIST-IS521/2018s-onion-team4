@@ -19,6 +19,16 @@ namespace PGP {
             exit(1); \
         } \
     } while(0);
+		class Data
+		{
+			private:
+				char* data;
+				size_t size;
+			public:
+				Data(char* data, size_t size);
+				char* getData();
+				size_t getSize();
+		};
 
     class PGP
     {
@@ -36,11 +46,14 @@ namespace PGP {
             void InitPubkey(string pubkey);
             void InitCTX();
 						void InitPassPhrase();
+						void setPass();
         public:
             PGP(string pubkey, string prikey);
             PGP(string pubkey);
-            char* Encrypt(char* pt);
-            char* Decrypt(char* ct);
+						string Encrypt(string pt);
+						string Encrypt(Data d);
+            string Decrypt(string ct);
+						Data Decrypt_as_Data(string ct);
             bool Verify_Pass(const char *pass);
             void setUid(string uid);
             string getUid();

@@ -3,6 +3,7 @@
 #include <string.h>
 #include <fstream>
 #include <streambuf>
+#include <assert.h>
 
 namespace PGP {
     gpgme_error_t passphrase_cb(void *pass, const char *uid_hint,
@@ -35,7 +36,7 @@ namespace PGP {
 
     void PGP::get_passphrase_info() {
         gpgme_set_passphrase_cb(ctx, get_passphrase_info_cb, (void *)this);
-        this->Decrypt(this->Encrypt((char *)"a"));
+        this->Decrypt(this->Encrypt("a"));
     }
 
     void PGP::InitPrikey(string prikey) {
@@ -78,6 +79,7 @@ namespace PGP {
         InitCTX();
         InitPubkey(pubkey);
         InitPrikey(prikey);
+				setPass();
     }
 
     // This only provide enc
@@ -102,16 +104,22 @@ namespace PGP {
         return passphrase_info;
     }
 
+void PGP::setPass(){
+	do{
+		passphrase = getpass("Enter passphrase :");
+	}while(!Verify_Pass(passphrase));
+}
 
 bool PGP::Verify_Pass(const char *pass){
     if (pass) {
         passphrase = strdup(pass);
         gpgme_set_passphrase_cb(ctx, passphrase_cb, passphrase);
-        const char *t = "Verify Pass\n";
-        char *res = Decrypt(Encrypt((char *)t));
-        if (res && !strcmp(res, t)) {
+        string t = "Verify Pass\n";
+        string res = Decrypt(Encrypt(t));
+        if (!res.empty() && !res.compare(t)) {
             return true;
         } else {
+						std::cout << "Wrong Passphrase" << std::endl;
             free(passphrase);
             passphrase = 0;
             return false;
@@ -120,19 +128,19 @@ bool PGP::Verify_Pass(const char *pass){
     return false;
 }
 
-char* PGP::Decrypt(char* ct){
+string PGP::Decrypt(string ct){
     gpgme_data_t cipher_text, plain_text;
-
-    gpgme_data_new_from_mem(&cipher_text, ct, strlen(ct), 1);
+		
+    gpgme_data_new_from_mem(&cipher_text, ct.c_str(), ct.size(), 1);
     gpgme_data_new(&plain_text);
     gpgme_op_decrypt(ctx, cipher_text, plain_text);
 
     size_t size;
     char* result = gpgme_data_release_and_get_mem(plain_text, &size);
-    return result;
+		return string(result, size);
 }
 
-char* PGP::Encrypt(char* pt){
+string PGP::Encrypt(string pt){
     gpgme_error_t err;
     gpgme_data_t keydata;
     gpgme_data_t cipher_text, plain_text;
@@ -149,7 +157,7 @@ char* PGP::Encrypt(char* pt){
     err = gpgme_get_key(ctx, import_result->imports->fpr, &key[0], 0);
     fail_if_err(err);
 
-    err = gpgme_data_new_from_mem(&plain_text, pt, strlen(pt), 0);
+    err = gpgme_data_new_from_mem(&plain_text, pt.c_str(), pt.size(), 0);
     fail_if_err(err);
 
     gpgme_data_new(&cipher_text);
@@ -158,7 +166,6 @@ char* PGP::Encrypt(char* pt){
 
     size_t size;
     char* result = gpgme_data_release_and_get_mem(cipher_text, &size);
-    return result;
+    return string(result, size);
 }
->>>>>>> 9dac6b8bc8ccf28196734b2438d826bd1aa0b00c
 }
