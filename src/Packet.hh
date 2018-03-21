@@ -9,10 +9,19 @@ class Packet
 
 class HandShake : Packet
 {
+    public:
+        uint32_t id_length, pubkey_length, connected_nodes;
+        
+        char *Serialize();
 };
 
 class Msg : Packet
 {
+    public:
+        uint32_t timestamp, length;
+        char* message;
+
+        char *Serialize();
 };
 
 #endif
