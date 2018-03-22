@@ -1,8 +1,9 @@
-#ifndef __UI__
-#define __UI__
+#ifndef __TUI__
+#define __TUI__
 
 #define MAX_ID_LEN 30
 #include <iostream>
+#include <mutex>
 #include "UIProvider.hh"
 
 using namespace std;
@@ -11,6 +12,8 @@ namespace TUI
 {
     class TUIProvider : public UI::UIProvider
     {
+        private:
+            mutex msgLock;
         public:
             pair<string, string> GetUserInfo(string uid, string info, char *msg);
             void UserInputLoop(string uid, string keyid,

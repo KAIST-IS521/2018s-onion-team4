@@ -361,7 +361,9 @@ namespace TUI
     }
 
     void TUIProvider::PushMessage(char *msg) {
+        msgLock.lock();
         TUIImplement::writeChat(msg);
+        msgLock.unlock();
     }
 
     void TUIProvider::PushError(char *msg) {
