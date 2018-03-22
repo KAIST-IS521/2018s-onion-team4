@@ -85,38 +85,29 @@ namespace OnionMessenger {
     //go get github.com/zyxar/image2ascii
     //image2ascii [image_file]
     void OnionMessenger::Imagehandle(string url){
-      pid_t childpid;
+      pid_t pid;
       int status;
-      char* imagepath;
-      imagepath="image.jpg";
-      char * urls = new char[str.size() + 1];
-      std::copy(str.begin(), str.end(), urls);
-      urls[str.size()] = '\0';
-      childpid = fork();
-      if(childpid == -1)
-      {
+      char *imagepath = "image.jpg";
+
+      pid = fork();
+      if (pid == -1) { /* Error occured, Exception required */ }
+      else if(pid == 0) { // Child
+        execlp("wget", "wget", "-q", url.c_str(), "-O", imagepath, NULL);
       }
-      else if(childpid == 0)
-      {
-           execlp("wget","wget","-q",urls,"-O",imagepath,NULL);
+      // parent
+      wait(&status);
+
+      pid = fork();
+      if (pid == -1) { /* Error occured, Exception required */ }
+      else if(pid == 0) { // child
+        execlp("image2ascii", "image2ascii", imagepath, NULL); //docker
       }
-      else
-      {
-        wait(&status);
-        childpid = fork();
-        if(childpid == -1)
-        {
-        }
-        else if(childpid == 0)
-        {
-             execlp("image2ascii","image2ascii",imagepath,NULL);
-        }
-        else
-        {
-          wait(&status);
-        }
-      }
-    }
+      // parent
+      wait(&status);
+
+  // Done
+  // verification is required
+}
 
     void OnionMessenger::Loop(void) {
         InitServer();
