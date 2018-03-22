@@ -27,7 +27,8 @@ class OnionMessenger
             OnionMessenger(bool usetui, string priv, string pub);
             void Loop(void);
             void handleCommand(char *msg);
-            void Imagehandle(string url)
+            void Downloadimag(string urls);
+            void Asciiart(char *filepath);
 
     };
 }

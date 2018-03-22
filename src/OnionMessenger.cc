@@ -1,9 +1,22 @@
 #include "OnionMessenger.hh"
 #include "ui/tui.hh"
 #include <string>
+#include <stdio.h>
+#include <curl/curl.h>
 #include <unistd.h>
 
 namespace OnionMessenger {
+    size_t callbackfunction(void *ptr, size_t size, size_t nmemb, void* userdata)
+    {
+        FILE* stream = (FILE*)userdata;
+        if (!stream){
+            //no stream
+            return 0;
+          }
+
+          size_t written = fwrite((FILE*)ptr, size, nmemb, stream);
+          return written;
+    }
 
     bool handleServer(Server *server, ReadCTX *ctx) {
         return 1;
@@ -71,36 +84,59 @@ namespace OnionMessenger {
         if (!cmd.compare("/msg")) {
             // TODO: handle msg
         } else if(!cmd.compare("/image")) {
-          this->Imagehandle(input)
+          this->Downloadimag(input);
         } else {
             auto err = ("Unknown Command: " + string(msg));
             provider->PushMessage((char *)err.c_str());
         }
     }
 
+    void OnionMessenger::Downloadimag(string urls)
+    {
+        char *filepath;
+        filepath="out.jpg";
+        FILE* fp = fopen(filepath, "wb");
+        char *url=&urls[0];
+        if (!fp)
+        {
+            //file open error
+            return false;
+        }
 
-    //mdkir ~/go
-    //export GOPATH=~/go
-    //export PATH=$PATH:$GOPATH/bin
-    //go get github.com/zyxar/image2ascii
-    //image2ascii [image_file]
-    void OnionMessenger::Imagehandle(string url){
+        CURL* curlCtx = curl_easy_init();
+        curl_easy_setopt(curlCtx, CURLOPT_URL, url);
+        curl_easy_setopt(curlCtx, CURLOPT_WRITEDATA, fp);
+        curl_easy_setopt(curlCtx, CURLOPT_WRITEFUNCTION, callbackfunction);
+        curl_easy_setopt(curlCtx, CURLOPT_FOLLOWLOCATION, 1);
+
+        CURLcode rc = curl_easy_perform(curlCtx);
+        if (rc)
+        {
+            //failed to download
+            return false;
+        }
+
+        long res_code = 0;
+        curl_easy_getinfo(curlCtx, CURLINFO_RESPONSE_CODE, &res_code);
+        if (!((res_code == 200 || res_code == 201) && rc != CURLE_ABORTED_BY_CALLBACK))
+        {
+            //page error
+        }
+
+        curl_easy_cleanup(curlCtx);
+
+        fclose(fp);
+        this.Asciiart(filepath);
+    }
+
+    void OnionMessenger::Asciiart(char *filepath){
       pid_t pid;
       int status;
-      char *imagepath = "image.jpg";
-
-      pid = fork();
-      if (pid == -1) { /* Error occured, Exception required */ }
-      else if(pid == 0) { // Child
-        execlp("wget", "wget", "-q", url.c_str(), "-O", imagepath, NULL);
-      }
-      // parent
-      wait(&status);
 
       pid = fork();
       if (pid == -1) { /* Error occured, Exception required */ }
       else if(pid == 0) { // child
-        execlp("image2ascii", "image2ascii", imagepath, NULL); //docker
+        execlp("image2ascii", "image2ascii", filepath, NULL); //docker
       }
       // parent
       wait(&status);
