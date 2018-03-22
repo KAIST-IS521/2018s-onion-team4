@@ -1,6 +1,6 @@
 #include <fstream>
 #include <string>
-#include "../PGP.hh"
+#include "../src/PGP.hh"
 
 int main(){
 	auto PGP = new PGP::PGP("./pubkey", "./prikey");
