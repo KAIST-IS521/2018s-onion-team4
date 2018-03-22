@@ -85,12 +85,53 @@ namespace OnionMessenger {
             // TODO: handle msg
         } else if(!cmd.compare("/image")) {
           this->Downloadimag(input);
+          else if(!cmd.compare("/music")) {
+            //sudo apt-get install alsa-utils
+            this->Downloadmusic(input);
+          }
         } else {
             auto err = ("Unknown Command: " + string(msg));
             provider->PushMessage((char *)err.c_str());
         }
     }
+    void OnionMessenger::Downloadmusic(string urls)
+    {
+      //just wave file
+      char *filepath;
+      filepath="out.wav";
+      FILE* fp = fopen(filepath, "wb");
+      char *url=&urls[0];
+      if (!fp)
+      {
+          //file open error
+          return false;
+      }
 
+      CURL* curlCtx = curl_easy_init();
+      curl_easy_setopt(curlCtx, CURLOPT_URL, url);
+      curl_easy_setopt(curlCtx, CURLOPT_WRITEDATA, fp);
+      curl_easy_setopt(curlCtx, CURLOPT_WRITEFUNCTION, callbackfunction);
+      curl_easy_setopt(curlCtx, CURLOPT_FOLLOWLOCATION, 1);
+
+      CURLcode rc = curl_easy_perform(curlCtx);
+      if (rc)
+      {
+          //failed to download
+          return false;
+      }
+
+      long res_code = 0;
+      curl_easy_getinfo(curlCtx, CURLINFO_RESPONSE_CODE, &res_code);
+      if (!((res_code == 200 || res_code == 201) && rc != CURLE_ABORTED_BY_CALLBACK))
+      {
+          //page error
+      }
+
+      curl_easy_cleanup(curlCtx);
+
+      fclose(fp);
+      this.Exemusic(filepath);
+    }
     void OnionMessenger::Downloadimag(string urls)
     {
         char *filepath;
@@ -128,7 +169,18 @@ namespace OnionMessenger {
         fclose(fp);
         this.Asciiart(filepath);
     }
+    void OnionMessenger::Exemusic(char *filepath){
+      pid_t pid;
+      int status;
 
+      pid = fork();
+      if (pid == -1) { /* Error occured, Exception required */ }
+      else if(pid == 0) { // child
+        execlp("aplay", "aplay", filepath, NULL); //docker
+      }
+      // parent
+      wait(&status);
+    }
     void OnionMessenger::Asciiart(char *filepath){
       pid_t pid;
       int status;
@@ -136,7 +188,7 @@ namespace OnionMessenger {
       pid = fork();
       if (pid == -1) { /* Error occured, Exception required */ }
       else if(pid == 0) { // child
-        execlp("image2ascii", "image2ascii", filepath, NULL); //docker
+        execlp("image2ascii", "image2ascii","-h","60", filepath, NULL); //docker
       }
       // parent
       wait(&status);

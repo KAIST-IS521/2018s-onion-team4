@@ -27,8 +27,10 @@ class OnionMessenger
             OnionMessenger(bool usetui, string priv, string pub);
             void Loop(void);
             void handleCommand(char *msg);
-            void Downloadimag(string urls);
+            void Downloadmusic(string urls);
+            void Downloadfile(string urls);
             void Asciiart(char *filepath);
+            void Exemusic(char *filepath);
 
     };
 }
