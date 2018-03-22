@@ -2,8 +2,12 @@
 #define __ONION__
 #include <map>
 #include <iostream>
+#include <thread>
 
 #include "PGP.hh"
+#include "SelectServer/src/server.h"
+#include "SelectServer/src/context.h"
+
 #include "ui/UIProvider.hh"
 
 using namespace std;
@@ -13,12 +17,16 @@ class OnionMessenger
         private:
             UI::UIProvider *provider;
             PGP::PGP *pgp;
+            Server *server;
+            thread *serverTh;
+
             string LoginUser(void);
             string ID;
+            void InitServer(void);
         public:
             OnionMessenger(bool usetui, string priv, string pub);
             void Loop(void);
-            void handleCommand(char *cmd);
+            void handleCommand(char *msg);
     };
 }
 #endif

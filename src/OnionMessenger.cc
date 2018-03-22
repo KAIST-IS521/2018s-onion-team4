@@ -1,11 +1,14 @@
 #include "OnionMessenger.hh"
 #include "ui/tui.hh"
 #include <string>
-#include <thread>
 #include <unistd.h>
-#include <ncurses.h>
 
 namespace OnionMessenger {
+
+    bool handleServer(Server *server, ReadCTX *ctx) {
+        return 1;
+    };
+
     void handleCLI(char *in, void *aux) {
         auto messenger = static_cast<OnionMessenger *>(aux);
         messenger->handleCommand(in);
@@ -43,13 +46,41 @@ namespace OnionMessenger {
         ID = LoginUser();
     }
 
+    void OnionMessenger::InitServer(void) {
+        server = newServer(1234, handleServer);
+        serverTh = new thread(ServerLoop, server);
+    }
+
     void OnionMessenger::handleCommand(char *msg) {
+        if (!msg) return;
+        string input;
+        string cmd(""), id("");
+        input.assign(msg);
+        auto nptr = input.find(" ");
+        if (nptr != string::npos) {
+            cmd = input.substr(0, nptr);
+
+            input = input.substr(nptr+1);
+            nptr = input.find(" ");
+            if (nptr != string::npos) {
+                id = input.substr(0, nptr);
+                input = input.substr(nptr + 1);
+            }
+        }
+
+        if (!cmd.compare("/msg")) {
+            // TODO: handle msg
+        } else if(!cmd.compare("/image")) {
+            // TODO: handle image
+        } else {
+            auto err = ("Unknown Command: " + string(msg));
+            provider->PushMessage((char *)err.c_str());
+        }
     }
 
     void OnionMessenger::Loop(void) {
-        // TODO: Launch server thread here.
+        InitServer();
         provider->UserInputLoop(ID, pgp->getPassInfo().substr(0, 8),
-                handleCLI, provider);
+                handleCLI, this);
     }
-
 }
