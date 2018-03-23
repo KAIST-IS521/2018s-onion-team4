@@ -4,10 +4,10 @@
 #include <string>
 
 namespace MessageHandler {
-    void handleHandShake(void *aux, Packet::Packet *packet) {
+    bool handleHandShake(void *aux, Packet::Packet *packet) {
         auto messenger = static_cast<OnionMessenger::OnionMessenger *>(aux);
         auto handshake = static_cast<Packet::HandShake *>(packet);
-        messenger->HandleAsync(handshake);
+        return messenger->HandleHandShake(handshake);
     }
 
     void handleMsg(void *aux, Packet::Packet *packet) {
@@ -16,15 +16,15 @@ namespace MessageHandler {
         messenger->HandleAsync(msg);
     }
 }
-namespace OnionMessenger {
 
+namespace OnionMessenger {
     bool handleServer(Server *server, ReadCTX *ctx, void *aux) {
         Packet::Packet *packet = Packet::Unserialize(ctx);
         int ret = 1;
-        if (packet->isReady()) {
-            switch (packet->getType()) {
+        if (packet->IsReady()) {
+            switch (packet->GetType()) {
                 case HANDSHAKE:
-                    MessageHandler::handleHandShake(aux, packet);
+                    ret = MessageHandler::handleHandShake(aux, packet);
                     break;
                 case MSG:
                     MessageHandler::handleMsg(aux, packet);
@@ -44,8 +44,20 @@ namespace OnionMessenger {
         messenger->HandleCommand(in);
     }
 
+    UserRepresentation::UserRepresentation(string pubkey, string _id,
+                                           int _ip, int _fd) {
+        pgp = new PGP::PGP(pubkey);
+        id.assign(_id);
+        ip = _ip;
+        fd = _fd;
+    }
+
+    UserRepresentation::~UserRepresentation() {
+        delete pgp;
+    }
+
     void OnionMessenger::HandleAsync(Packet::Msg *msg) {
-        string ct(msg->GetMessage(), msg->GetMessageLength());
+        string ct = msg->GetMessage();
         auto future = async([this, &ct] ()
                 { provider->PushMessage(pgp->Decrypt(ct)); });
         futureMutex.lock();
@@ -53,8 +65,44 @@ namespace OnionMessenger {
         futureMutex.unlock();
     }
 
-    void OnionMessenger::HandleAsync(Packet::HandShake *hs) {
-        // TODO
+    bool OnionMessenger::HandleHandShake(Packet::HandShake *hs) {
+        string id = hs->GetId();
+        // assert no user
+        bool find;
+        if (users.find(id) == users.end()) {
+            find = false;
+            for (auto s : hs->GetConnectedNodes()) {
+                for (auto u : users) {
+                    if (u.second->GetIp() == s) {
+                        find = true;
+                        break;
+                    }
+                }
+                if (!find) {
+                    HandShake(hs->GetIp());
+                }
+            }
+            auto user = new UserRepresentation(hs->GetId(), hs->GetPubKey(),
+                                               hs->GetIp(), hs->GetFd());
+            users[hs->GetId()] = user;
+            return true;
+        }
+        return false;
+    }
+
+    void OnionMessenger::HandShake(uint32_t ip) {
+        vector<uint32_t> cNodes;
+
+        for (auto u : users) {
+            cNodes.push_back(u.second->GetIp());
+        }
+        // TODO: create connection
+        // auto hs = new Packet::HandShake(ip, cNodes);
+        //
+        // serverWriteMutex.lock();
+        // auto build = hs->Serialize();
+        // WriteServer(server, fd, build.first, build.second);
+        // serverWriteMutex.unlock();
     }
 
     void OnionMessenger::CleanFuture(void) {
@@ -93,13 +141,13 @@ namespace OnionMessenger {
         if (usetui) {
            provider = new TUI::TUIProvider();
         } else {
-            //provider = new CUIProvider();
+            // provider = new CUI::CUIProvider();
         }
         ID = LoginUser();
     }
 
     void OnionMessenger::InitServer(void) {
-        server = newServer(1234, handleServer, this);
+        server = newServer(PORT, handleServer, this);
         serverTh = new thread(ServerLoop, server);
     }
 
@@ -134,6 +182,6 @@ namespace OnionMessenger {
     void OnionMessenger::Loop(void) {
         InitServer();
         provider->UserInputLoop(ID, pgp->getPassInfo().substr(0, 8),
-                handleCLI, this);
+                                handleCLI, this);
     }
 }

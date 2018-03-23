@@ -13,29 +13,50 @@
 #include "Features.hh"
 #include "ui/UIProvider.hh"
 
+#define PORT 1234
+
 using namespace std;
 namespace OnionMessenger {
-class OnionMessenger
+    class UserRepresentation {
+        private:
+            PGP::PGP *pgp;
+            string id;
+            uint32_t ip;
+            int fd;
+        public:
+            string GetId(void) { return id; };
+            uint32_t GetIp(void) { return ip; };
+            int GetFd(void) { return fd; };
+            string Decrypt(string msg) { return pgp->Decrypt(msg); };
+            UserRepresentation(string pk, string id, int ip, int fd);
+            ~UserRepresentation();
+    };
+
+    class OnionMessenger
     {
         private:
             UI::UIProvider *provider;
             PGP::PGP *pgp;
             Server *server;
-            thread *serverTh;
 
+            thread *serverTh;
             mutex serverWriteMutex;
+
             mutex futureMutex;
             vector<future<void>> futures;
+
+            map<string, UserRepresentation *> users;
 
             string LoginUser(void);
             string ID;
             void InitServer(void);
+            void HandShake(uint32_t ip);
         public:
             OnionMessenger(bool usetui, string priv, string pub);
             void Loop(void);
             void HandleCommand(char *msg);
             void HandleAsync(Packet::Msg *msg);
-            void HandleAsync(Packet::HandShake *hs);
+            bool HandleHandShake(Packet::HandShake *hs);
             void CleanFuture(void);
     };
 }
