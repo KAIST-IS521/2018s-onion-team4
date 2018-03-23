@@ -79,11 +79,15 @@ namespace OnionMessenger {
                     }
                 }
                 if (!find) {
-                    HandShake(hs->GetIp());
+                    HandShake(s);
                 }
             }
+            /* TODO: get ip from fd
+            auto ip = hs->GetIp();
+            */
+            auto ip = 0;
             auto user = new UserRepresentation(hs->GetId(), hs->GetPubKey(),
-                                               hs->GetIp(), hs->GetFd());
+                                               ip, hs->GetFd());
             users[hs->GetId()] = user;
             return true;
         }
@@ -96,13 +100,11 @@ namespace OnionMessenger {
         for (auto u : users) {
             cNodes.push_back(u.second->GetIp());
         }
-        // TODO: create connection
-        // auto hs = new Packet::HandShake(ip, cNodes);
-        //
-        // serverWriteMutex.lock();
-        // auto build = hs->Serialize();
-        // WriteServer(server, fd, build.first, build.second);
-        // serverWriteMutex.unlock();
+        // TODO: create connection as fd.
+        auto hs = new Packet::HandShake(ID, cNodes, pgp->GetPub());
+        serverWriteMutex.lock();
+        // hs->SendFd(server, fd);
+        serverWriteMutex.unlock();
     }
 
     void OnionMessenger::CleanFuture(void) {
