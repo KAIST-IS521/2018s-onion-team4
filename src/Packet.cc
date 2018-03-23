@@ -44,8 +44,6 @@ namespace Packet {
             };
     };
 
-
-
     Packet* Unserialize(ReadCTX *ctx) {
         Packet *packet;
         int type;
@@ -63,6 +61,13 @@ namespace Packet {
         }
         packet->ContinueBuild(ctx);
         return packet;
+    }
+
+    void Packet::SendFd(Server *server, int fd) {
+        auto s = Serialize();
+        ServerWrite(server, fd, s.first, s.second);
+        free(s.first);
+        delete this;
     }
 
     pair<char *, size_t> Msg::Serialize(void) {
@@ -100,6 +105,28 @@ namespace Packet {
         if (message) free(message);
     }
 
+    Msg::Msg(string msg) : Packet(MSG) {
+        message = strdup(msg.c_str());
+        length = msg.size();
+    }
+
+    HandShake::HandShake(string _id, vector<uint32_t> cNodes,
+            string pubkey) : Packet(HANDSHAKE) {
+            id = strdup(_id.c_str());
+            id_length = _id.size();
+            pubkey = strdup(pubkey.c_str());
+            pubkey_length = pubkey.size();
+            connected_nodes = cNodes.size();
+            node_ips = (uint32_t *)calloc(sizeof(uint32_t), connected_nodes);
+            std::copy(cNodes.begin(), cNodes.end(), node_ips);
+    }
+
+    HandShake::~HandShake(void) {
+        if (id) free(id);
+        if (pubkey) free(pubkey);
+        if (node_ips) free(node_ips);
+    }
+
     pair<char *, size_t> HandShake::Serialize(void) {
         PacketBuilder builder;
         builder << (uint8_t) HANDSHAKE
@@ -113,6 +140,18 @@ namespace Packet {
             builder << htonl(node_ips[i]);
         }
         return builder.Finalize();
+    }
+
+    string HandShake::GetId(void) {
+        return string(id, id_length);
+    }
+
+    string HandShake::GetPubKey(void) {
+        return string(pubkey, pubkey_length);
+    }
+
+    vector<uint32_t> HandShake::GetConnectedNodes(void) {
+        return vector<uint32_t>(node_ips, node_ips + connected_nodes);
     }
 
     void HandShake::ContinueBuild(ReadCTX *ctx) {

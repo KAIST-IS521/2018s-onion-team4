@@ -22,13 +22,14 @@ namespace Packet {
         public:
             Packet(int t, int fd) : ready(false), type(t), fd(fd) { };
             Packet(int t) : ready(false), type(t) { };
-            ~Packet(void) {}
+            virtual ~Packet(void) { };
             virtual pair<char *, size_t> Serialize(void) = 0;
             virtual void ContinueBuild(ReadCTX *ctx) = 0;
             int GetType(void) { return type; };
             int GetFd(void) { return fd; };
             int IsReady(void) { return ready; };
             void SetReady(void) { ready = true; };
+            void SendFd(Server *server, int fd);
     };
 
     class HandShake : public Packet
@@ -36,23 +37,19 @@ namespace Packet {
         private:
             int state = 0;
             uint32_t id_length, pubkey_length, connected_nodes;
-            char* id, *pubkey;
-            uint32_t* node_ips;
-            // TODO: We need ip of the client.
-            // TODO: Add ip field into packet.
-            uint32_t ip;
+            char *id = NULL;
+            char *pubkey = NULL;
+            uint32_t* node_ips = NULL;
         public:
             pair<char *, size_t> Serialize(void);
             string GetId(void);
             string GetPubKey(void);
-            int GetIp(void);
             vector<uint32_t> GetConnectedNodes(void);
             void ContinueBuild(ReadCTX *ctx);
 
-            HandShake(int t) : Packet(HANDSHAKE, t) { }
-            // TODO: Implement this.
-            HandShake(int ip, vector<uint32_t> cNodes) : Packet(HANDSHAKE);
-            ~HandShake(void) { }
+            HandShake(int t) : Packet(HANDSHAKE, t) { };
+            HandShake(string id, vector<uint32_t> cNodes, string pubkey);
+            ~HandShake(void);
     };
 
     class Msg : public Packet
@@ -66,8 +63,7 @@ namespace Packet {
             string GetMessage(void);
             void ContinueBuild(ReadCTX *ctx);
             Msg(int t) : Packet(MSG, t) { };
-            // TODO: Implement this.
-            Msg(string msg) : Packet(MSG);
+            Msg(string msg);
             ~Msg(void);
     };
 
