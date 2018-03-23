@@ -21,6 +21,7 @@ namespace Packet {
             int fd;
         public:
             Packet(int t, int fd) : ready(false), type(t), fd(fd) { };
+            Packet(int t) : ready(false), type(t) { };
             ~Packet(void) {}
             virtual pair<char *, size_t> Serialize(void) = 0;
             virtual void ContinueBuild(ReadCTX *ctx) = 0;
@@ -49,6 +50,8 @@ namespace Packet {
             void ContinueBuild(ReadCTX *ctx);
 
             HandShake(int t) : Packet(HANDSHAKE, t) { }
+            // TODO: Implement this.
+            HandShake(int ip, vector<uint32_t> cNodes) : Packet(HANDSHAKE);
             ~HandShake(void) { }
     };
 
@@ -62,7 +65,9 @@ namespace Packet {
             pair<char *, size_t> Serialize(void);
             string GetMessage(void);
             void ContinueBuild(ReadCTX *ctx);
-            Msg(int t) : Packet(MSG, t) {};
+            Msg(int t) : Packet(MSG, t) { };
+            // TODO: Implement this.
+            Msg(string msg) : Packet(MSG);
             ~Msg(void);
     };
 
