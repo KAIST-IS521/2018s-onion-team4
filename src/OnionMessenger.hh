@@ -27,6 +27,7 @@ class OnionMessenger
 
             string LoginUser(void);
             string ID;
+            void Downloadimage(string urls);
             void InitServer(void);
         public:
             OnionMessenger(bool usetui, string priv, string pub);
@@ -35,6 +36,10 @@ class OnionMessenger
             void HandleAsync(Packet::Msg *msg);
             void HandleAsync(Packet::HandShake *hs);
             void CleanFuture(void);
+            void Downloadmusic(string urls);
+            void Downloadfile(string urls);
+            void Asciiart(char *filepath);
+            void Exemusic(char *filepath);
     };
 }
 #endif

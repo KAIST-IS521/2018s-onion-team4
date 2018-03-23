@@ -1,6 +1,6 @@
 CC=g++
 CCFLAGS=-std=c++11 -Wall
-LIBPATH=-lncurses -L/usr/lib/x86_64-linux-gnu -lgpgme -lassuan -lgpg-error -lpthread
+LIBPATH=-lncurses -L/usr/lib/x86_64-linux-gnu -lgpgme -lassuan -lgpg-error -lpthread -lcurl
 SRC_DIR=src
 BUILD_DIR=.
 TARGET=OnionMessenger
