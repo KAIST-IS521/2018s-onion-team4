@@ -120,5 +120,48 @@ namespace Packet {
             hs->node_ips[i] = temp;
         }
         */
+        unsigned int il, kl, cn;
+        // state for parse length
+        if (state == 0 && CTXGetsz(ctx) >= 4) {
+            CTXRead(ctx, (char *)&il, 4);
+            id_length = ntohl(il);
+            state = 1;
+        }
+        // state for parse message
+        if (state == 1 && CTXGetsz(ctx) >= id_length) {
+            id = (char *)calloc(1, id_length + 1);
+            CTXRead(ctx, id, id_length);
+            state = 2;
+        }
+        if (state == 2 && CTXGetsz(ctx) >= 4) {
+            CTXRead(ctx, (char *)&kl, 4);
+            pubkey_length = ntohl(kl);
+            state = 3;
+        }
+        if (state == 3 && CTXGetsz(ctx) >= pubkey_length) { 
+            pubkey = (char *)calloc(1, pubkey_length + 1);
+            CTXRead(ctx, pubkey, pubkey_length);
+            state = 4;
+        }
+        if (state == 4 && CTXGetsz(ctx) >= 4) {
+            CTXRead(ctx, (char *)&cn, 4);
+            connected_nodes = ntohl(cn);
+            state = 5;
+        }
+        if (state == 5 && CTXGetsz(ctx) >= connected_nodes * 4){
+            node_ips = (char *)calloc(1, connected_nodes * 4);
+            for (unsigned int i = 0; i < connected_nodes; i++) {
+                unsigned int temp;
+                CTXRead(ctx, (char *)&temp, 4);
+                node_ips[i] = ntohl(temp);
+            }
+            // Release unused buffer
+            CTXDiscard(ctx);
+            setReady();
+            ctx->aux = NULL;
+            return;
+        }
+        ctx->aux = this;
+ 
     }
 }
