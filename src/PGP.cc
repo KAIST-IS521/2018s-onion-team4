@@ -62,16 +62,12 @@ namespace PGP {
     }
 
     void PGP::InitPrikey(string prikey) {
-        ifstream pri(prikey);
-        priArmored.assign((istreambuf_iterator<char>(pri)),
-                std::istreambuf_iterator<char>());
+        priArmored.assign(prikey);
 
     }
 
     void PGP::InitPubkey(string pubkey) {
-        ifstream pub(pubkey);
-        pubArmored.assign((istreambuf_iterator<char>(pub)),
-                std::istreambuf_iterator<char>());
+        pubArmored.assign(pubkey);
     }
     
 

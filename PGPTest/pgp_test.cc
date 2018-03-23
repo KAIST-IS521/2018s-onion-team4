@@ -5,7 +5,13 @@
 
 int main(){
     PGP::initGPG();
-    auto PGP = new PGP::PGP("./pubkey", "./prikey");
+    std::ifstream pri("./prikey");
+    std::ifstream pub("./pubkey");
+    string pubkey((std::istreambuf_iterator<char>(pub)),
+                     std::istreambuf_iterator<char>());
+    string prikey((std::istreambuf_iterator<char>(pri)),
+                     std::istreambuf_iterator<char>());
+    auto PGP = new PGP::PGP(prikey, pubkey);
     while(!PGP->Verify_Pass(getpass("Passpharse : ")));
     string cipher = PGP->Encrypt(string("This is test\x00hello world", 24));
 

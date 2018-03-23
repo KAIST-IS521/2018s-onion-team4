@@ -18,14 +18,18 @@ namespace Packet {
         private:
             bool ready;
             int type;
+            int fd;
         public:
+            Packet(int t, int fd) : ready(false), type(t), fd(fd) { };
             Packet(int t) : ready(false), type(t) { };
-            ~Packet() {}
-            virtual char *Serialize() = 0;
+            virtual ~Packet(void) { };
+            virtual pair<char *, size_t> Serialize(void) = 0;
             virtual void ContinueBuild(ReadCTX *ctx) = 0;
-            int getType() { return type; };
-            int isReady() { return ready; };
-            void setReady() { ready = true; };
+            int GetType(void) { return type; };
+            int GetFd(void) { return fd; };
+            int IsReady(void) { return ready; };
+            void SetReady(void) { ready = true; };
+            void SendFd(Server *server, int fd);
     };
 
     class HandShake : public Packet
@@ -33,17 +37,19 @@ namespace Packet {
         private:
             int state = 0;
             uint32_t id_length, pubkey_length, connected_nodes;
-            char* id, *pubkey;
-            uint32_t* node_ips;
+            char *id = NULL;
+            char *pubkey = NULL;
+            uint32_t* node_ips = NULL;
         public:
-            char *Serialize(void);
-            string getId(void);
-            string getPubKey(void);
-            vector<string> getConnectedNodes(void);
+            pair<char *, size_t> Serialize(void);
+            string GetId(void);
+            string GetPubKey(void);
+            vector<uint32_t> GetConnectedNodes(void);
             void ContinueBuild(ReadCTX *ctx);
 
-            HandShake() : Packet(HANDSHAKE) { }
-            ~HandShake() { }
+            HandShake(int t) : Packet(HANDSHAKE, t) { };
+            HandShake(string id, vector<uint32_t> cNodes, string pubkey);
+            ~HandShake(void);
     };
 
     class Msg : public Packet
@@ -53,11 +59,12 @@ namespace Packet {
             uint32_t length;
             char *message = NULL;
         public:
-            char *Serialize(void);
+            pair<char *, size_t> Serialize(void);
             string GetMessage(void);
             void ContinueBuild(ReadCTX *ctx);
-            Msg() : Packet(MSG) {};
-            ~Msg();
+            Msg(int t) : Packet(MSG, t) { };
+            Msg(string msg);
+            ~Msg(void);
     };
 
     Packet *Unserialize(ReadCTX *ctx);

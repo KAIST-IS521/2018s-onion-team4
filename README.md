@@ -27,12 +27,12 @@ Protocol
 There are three types of packet.
 
 ##### Handshake
-```| 0(uint8_t) | GithubID Length(uint32_t) | GithubID(GithubIDLength) |
+`| 0(uint8_t) | GithubID Length(uint32_t) | GithubID(GithubIDLength) |
 PubkeyLength(uint32_t) | Pubkey(PubkeyLength)| # of connected node(uint32_t)
-| (# of connected node) entries of Node IP(uint32_t) |```
+| (# of connected node) entries of Node IP(uint32_t) |`
 
 ##### Msg
-```| 1(uint8_t) | Length(uint32_t) | Data(Length) |```
+`| 1(uint8_t) | Length(uint32_t) | Data(Length) |`
 
 ##### Image
 
