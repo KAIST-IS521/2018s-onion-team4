@@ -59,12 +59,8 @@ namespace Packet {
         ctx->aux = this;
     }
 
-    char *Msg::GetMessage(void) {
-        return message;
-    }
-
-    int Msg::GetMessageLength(void) {
-        return length;
+    string Msg::GetMessage(void) {
+        return string(message, length);
     }
 
     Msg::~Msg(void) {
