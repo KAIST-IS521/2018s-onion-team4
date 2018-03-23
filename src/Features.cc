@@ -47,18 +47,21 @@ namespace Features {
         return true;
     }
 
-    void Downloadmusic(string url) {
+    void Downloadmusic(string id, string url) {
         //just wave file
-        string filepath = "out.wav";
+        string filepath = "/tmp/";
+        filepath.append(id).append("_out.wav");
         ofstream file(filepath);
         if (file.is_open() && download(url, &file)) {
             Exemusic(filepath.c_str());
         }
     }
 
-    void Downloadimage(string url) {
-        string filepath = "out.jpg";
+    void Downloadimage(string id, string url) {
+        string filepath = "/tmp/";
+        filepath.append(id).append("_out.jpg");
         ofstream file(filepath);
+
         if (file.is_open() && download(url, &file)) {
             Asciiart(filepath.c_str());
         }
@@ -71,7 +74,7 @@ namespace Features {
         pid = fork();
         if (pid == -1) { /* Error occured, Exception required */ }
         else if(pid == 0) { // child
-            execlp("aplay", "aplay", filepath, NULL); //docker
+            //ADD A VOICE PROGRAM
         }
         // parent
         wait(&status);
@@ -84,13 +87,25 @@ namespace Features {
         pid = fork();
         if (pid == -1) { /* Error occured, Exception required */ }
         else if(pid == 0) { // child
-            execlp("image2ascii", "image2ascii","-h","60", filepath, NULL); //docker
+            //execlp("image2ascii", "image2ascii","-h","60", filepath, NULL); //docker
+            const char *path="/bin/image2ascii" ;
+            char *const argv_A[] = {"image2ascii","-h","60",filepath,NULL};
+            execute(path, argv_A);
         }
         // parent
         wait(&status);
 
         // Done
         // verification is required
+    }
+    int execute(const char *path, char *const argv[]) {
+        pid_t pid;
+        int ret = posix_spawn(&pid, path, NULL, NULL, argv, NULL);
+
+        int status;
+        waitpid(pid, &status, 0);
+
+        return ret;
     }
 
 }
