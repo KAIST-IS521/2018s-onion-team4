@@ -35,6 +35,13 @@ namespace PGP {
     }
 
     void PGP::get_passphrase_info(void) {
+        gpgme_error_t err;
+        gpgme_ctx_t ctx;
+
+        err = gpgme_new(&ctx);
+        fail_if_err(err);
+        gpgme_set_pinentry_mode(ctx, GPGME_PINENTRY_MODE_LOOPBACK);
+        gpgme_set_armor(ctx, 1);
         gpgme_set_passphrase_cb(ctx, get_passphrase_info_cb, (void *)this);
         this->Decrypt(this->Encrypt("a"));
     }
@@ -45,9 +52,11 @@ namespace PGP {
         priArmored.assign((istreambuf_iterator<char>(pri)),
                 std::istreambuf_iterator<char>());
 
+        /*
         gpgme_error_t err;
         gpgme_data_t keydata;
         gpgme_import_result_t import_result;
+
         err = gpgme_data_new_from_mem(&keydata,
                 priArmored.c_str(), priArmored.size(), 0);
         fail_if_err(err);
@@ -58,6 +67,7 @@ namespace PGP {
         import_result = gpgme_op_import_result(ctx);
         err = gpgme_get_key(ctx, import_result -> imports -> fpr, &privkey, 1);
         get_passphrase_info();
+        */
     }
 
     void PGP::InitPubkey(string pubkey) {
@@ -66,6 +76,7 @@ namespace PGP {
                 std::istreambuf_iterator<char>());
     }
 
+    /*
     void PGP::InitCTX(void) {
         gpgme_error_t err;
         err = gpgme_new(&ctx);
@@ -73,10 +84,11 @@ namespace PGP {
         gpgme_set_pinentry_mode(ctx, GPGME_PINENTRY_MODE_LOOPBACK);
         gpgme_set_armor(ctx, 1);
     }
+    */
 
     // This provide enc, dec method
     PGP::PGP(string pubkey, string prikey) {
-        InitCTX();
+        //InitCTX();
         InitPubkey(pubkey);
         InitPrikey(prikey);
         //setPass();
@@ -84,7 +96,7 @@ namespace PGP {
 
     // This only provide enc
     PGP::PGP(string pubkey) {
-        InitCTX();
+        //InitCTX();
         InitPubkey(pubkey);
     }
 
@@ -106,6 +118,13 @@ namespace PGP {
 
 
     bool PGP::Verify_Pass(const char *pass) {
+        gpgme_ctx_t ctx;
+        gpgme_error_t err;
+        err = gpgme_new(&ctx);
+        fail_if_err(err);
+        gpgme_set_pinentry_mode(ctx, GPGME_PINENTRY_MODE_LOOPBACK);
+        gpgme_set_armor(ctx, 1);
+        
         if (pass) {
             passphrase = strdup(pass);
             gpgme_set_passphrase_cb(ctx, passphrase_cb, passphrase);
@@ -124,8 +143,26 @@ namespace PGP {
     }
 
     string PGP::Decrypt(string ct) {
+        gpgme_ctx_t ctx;
         gpgme_data_t cipher_text, plain_text;
+        gpgme_data_t keydata;
+        gpgme_import_result_t import_result;
+        gpgme_error_t err;
 
+        err = gpgme_new(&ctx);
+        fail_if_err(err);
+        gpgme_set_pinentry_mode(ctx, GPGME_PINENTRY_MODE_LOOPBACK);
+        gpgme_set_armor(ctx, 1);
+        gpgme_set_passphrase_cb(ctx, passphrase_cb, passphrase);
+
+        err = gpgme_data_new_from_mem(&keydata,
+                priArmored.c_str(), priArmored.size(), 0);
+        fail_if_err(err);
+
+        err = gpgme_op_import(ctx, keydata);
+        fail_if_err(err);
+        import_result = gpgme_op_import_result(ctx);
+        err = gpgme_get_key(ctx, import_result -> imports -> fpr, &privkey, 1);
         gpgme_data_new_from_mem(&cipher_text, ct.c_str(), ct.size(), 1);
         gpgme_data_new(&plain_text);
         gpgme_op_decrypt(ctx, cipher_text, plain_text);
@@ -137,11 +174,16 @@ namespace PGP {
 
     string PGP::Encrypt(string pt) {
         gpgme_error_t err;
-        gpgme_data_t keydata;
-        gpgme_data_t cipher_text, plain_text;
+        gpgme_data_t keydata, cipher_text, plain_text;
         gpgme_import_result_t import_result;
         gpgme_key_t key[2] = {NULL, NULL};
+        gpgme_ctx_t ctx;
 
+        err = gpgme_new(&ctx);
+        fail_if_err(err);
+        gpgme_set_pinentry_mode(ctx, GPGME_PINENTRY_MODE_LOOPBACK);
+        gpgme_set_armor(ctx, 1);
+        
         err = gpgme_data_new_from_mem(&keydata,
                 pubArmored.c_str(), pubArmored.size(), 0);
         fail_if_err(err);

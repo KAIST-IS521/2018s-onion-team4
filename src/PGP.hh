@@ -27,7 +27,6 @@ namespace PGP {
             string priArmored;
             string uid_hint;
             string passphrase_info;
-            gpgme_ctx_t ctx;
             gpgme_key_t privkey;
             char* passphrase;
 
