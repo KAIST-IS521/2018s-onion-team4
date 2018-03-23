@@ -27,7 +27,7 @@ namespace OnionMessenger {
             string GetId(void) { return id; };
             uint32_t GetIp(void) { return ip; };
             int GetFd(void) { return fd; };
-            string Decrypt(string msg) { return pgp->Decrypt(msg); };
+            string Encrypt(string msg) { return pgp->Encrypt(msg); };
             UserRepresentation(string pk, string id, int ip, int fd);
             ~UserRepresentation();
     };
@@ -51,6 +51,8 @@ namespace OnionMessenger {
             string ID;
             void InitServer(void);
             void HandShake(uint32_t ip);
+            void SendPacket(Packet::Packet *packet, int fd);
+            bool HandleChatAsync(string msg, string user);
         public:
             OnionMessenger(bool usetui, string priv, string pub);
             void Loop(void);
