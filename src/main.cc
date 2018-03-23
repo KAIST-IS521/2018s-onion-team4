@@ -4,13 +4,23 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <iostream>
+#include <fstream>
 #include <string>
 #include <getopt.h>
 
 using namespace std;
 void usage(char *progname) {
-    cout << "Usage: " << progname
-         << " [-n node] [-p pubkeypath] [-s prikeypath]" << endl;
+    cout << "Usage: " << progname << " [Options]" << endl
+         << endl
+         << "Required arguments" << endl
+         << "  --priv, -s : Private key file" << endl
+         << "  --pub,  -p : Public key file" << endl
+         << endl
+         << "Optional arguments" << endl
+         << "  --notui    : Not use TUI" << endl
+         << "  --node, -n : Another client's IP" << endl
+         << "  --help, -h : Show this message" << endl
+         << endl;
     exit(0);
 }
 
@@ -48,12 +58,23 @@ int main(int argc, char **argv) {
                 break;
         }
     }
-    if (priv.empty() || pub.empty())
-        usage(argv[0]);
+    ifstream privkey(priv);
+    ifstream pubkey(pub);
 
+    if (priv.empty() || pub.empty()) {
+        usage(argv[0]);
+    } else if (!privkey.is_open()) {
+        cerr << argv[0] << ": " << priv << " : No such file.";
+    } else if (!pubkey.is_open()) {
+        cerr << argv[0] << ": " << priv << " : No such file.";
+    }
+    string privData((std::istreambuf_iterator<char>(privkey)),
+                     std::istreambuf_iterator<char>());
+    string pubData((std::istreambuf_iterator<char>(pubkey)),
+                     std::istreambuf_iterator<char>());
     PGP::initGPG();
 
     auto onion =
-        new OnionMessenger::OnionMessenger(useTUI, priv, pub);
+        new OnionMessenger::OnionMessenger(useTUI, privData, pubData);
     onion->Loop();
 }

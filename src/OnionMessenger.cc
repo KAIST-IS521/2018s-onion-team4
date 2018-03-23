@@ -65,6 +65,26 @@ namespace OnionMessenger {
         futureMutex.unlock();
     }
 
+    void OnionMessenger::SendPacket(Packet::Packet *packet, int fd) {
+        serverWriteMutex.lock();
+        packet->SendFd(server, fd);
+        serverWriteMutex.unlock();
+    }
+
+    bool OnionMessenger::HandleChatAsync(string msg, string user) {
+        if (users.find(user) != users.end()) {
+            auto rep = users[user];
+            auto future = async([this, rep, &msg] ()
+                    { auto packet = new Packet::Msg(rep->Encrypt(msg));
+                      SendPacket(packet, rep->GetFd()); });
+            futureMutex.lock();
+            futures.push_back(move(future));
+            futureMutex.unlock();
+            return true;
+        }
+        return false;
+    }
+
     bool OnionMessenger::HandleHandShake(Packet::HandShake *hs) {
         string id = hs->GetId();
         // assert no user
@@ -102,9 +122,7 @@ namespace OnionMessenger {
         }
         // TODO: create connection as fd.
         auto hs = new Packet::HandShake(ID, cNodes, pgp->GetPub());
-        serverWriteMutex.lock();
-        // hs->SendFd(server, fd);
-        serverWriteMutex.unlock();
+        //SendPacket(hs, fd);
     }
 
     void OnionMessenger::CleanFuture(void) {

@@ -1,7 +1,6 @@
 #include "PGP.hh"
 #include <unistd.h>
 #include <string.h>
-#include <fstream>
 #include <streambuf>
 #include <assert.h>
 
@@ -46,7 +45,7 @@ namespace PGP {
         gpgme_set_pinentry_mode(ctx, GPGME_PINENTRY_MODE_LOOPBACK);
         gpgme_set_armor(ctx, 1);
         gpgme_set_passphrase_cb(ctx, get_passphrase_info_cb, (void *)this);
-        
+
         err = gpgme_data_new_from_mem(&keydata,
                 priArmored.c_str(), priArmored.size(), 0);
         fail_if_err(err);
@@ -69,7 +68,7 @@ namespace PGP {
     void PGP::InitPubkey(string pubkey) {
         pubArmored.assign(pubkey);
     }
-    
+
 
     // This provide enc, dec method
     PGP::PGP(string pubkey, string prikey) {
@@ -108,7 +107,7 @@ namespace PGP {
         fail_if_err(err);
         gpgme_set_pinentry_mode(ctx, GPGME_PINENTRY_MODE_LOOPBACK);
         gpgme_set_armor(ctx, 1);
-        
+
         if (pass) {
             passphrase = strdup(pass);
             gpgme_set_passphrase_cb(ctx, passphrase_cb, passphrase);
@@ -167,7 +166,7 @@ namespace PGP {
         fail_if_err(err);
         gpgme_set_pinentry_mode(ctx, GPGME_PINENTRY_MODE_LOOPBACK);
         gpgme_set_armor(ctx, 1);
-        
+
         err = gpgme_data_new_from_mem(&keydata,
                 pubArmored.c_str(), pubArmored.size(), 0);
         fail_if_err(err);
