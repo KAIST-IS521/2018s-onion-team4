@@ -10,6 +10,7 @@
 #include "SelectServer/src/context.h"
 #include "PGP.hh"
 #include "Packet.hh"
+#include "Features.hh"
 #include "ui/UIProvider.hh"
 
 using namespace std;
@@ -21,13 +22,13 @@ class OnionMessenger
             PGP::PGP *pgp;
             Server *server;
             thread *serverTh;
+
             mutex serverWriteMutex;
             mutex futureMutex;
             vector<future<void>> futures;
 
             string LoginUser(void);
             string ID;
-            void Downloadimage(string urls);
             void InitServer(void);
         public:
             OnionMessenger(bool usetui, string priv, string pub);
@@ -36,10 +37,6 @@ class OnionMessenger
             void HandleAsync(Packet::Msg *msg);
             void HandleAsync(Packet::HandShake *hs);
             void CleanFuture(void);
-            void Downloadmusic(string urls);
-            void Downloadfile(string urls);
-            void Asciiart(char *filepath);
-            void Exemusic(char *filepath);
     };
 }
 #endif
