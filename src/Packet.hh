@@ -2,10 +2,16 @@
 #define __PACKET__
 
 #include <cstdint>
+#include <string>
+#include <vector>
+
 #include "SelectServer/src/context.h"
 
 #define HANDSHAKE 0
 #define MSG 1
+#define IMG 2
+
+using namespace std;
 namespace Packet {
     class Packet
     {
@@ -20,17 +26,20 @@ namespace Packet {
             int getType() { return type; };
             int isReady() { return ready; };
             void setReady() { ready = true; };
-
     };
 
     class HandShake : public Packet
     {
-        public:
+        private:
+            int state = 0;
             uint32_t id_length, pubkey_length, connected_nodes;
             char* id, *pubkey;
             uint32_t* node_ips;
-
-            char *Serialize();
+        public:
+            char *Serialize(void);
+            string getId(void);
+            string getPubKey(void);
+            vector<string> getConnectedNodes(void);
             void ContinueBuild(ReadCTX *ctx);
 
             HandShake() : Packet(HANDSHAKE) { }
@@ -45,8 +54,7 @@ namespace Packet {
             char *message = NULL;
         public:
             char *Serialize(void);
-            char *GetMessage(void);
-            int GetMessageLength(void);
+            string GetMessage(void);
             void ContinueBuild(ReadCTX *ctx);
             Msg() : Packet(MSG) {};
             ~Msg();
