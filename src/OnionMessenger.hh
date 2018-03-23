@@ -1,13 +1,15 @@
 #ifndef __ONION__
 #define __ONION__
 #include <map>
+#include <vector>
 #include <iostream>
 #include <thread>
+#include <mutex>
 
-#include "PGP.hh"
 #include "SelectServer/src/server.h"
 #include "SelectServer/src/context.h"
-
+#include "PGP.hh"
+#include "Packet.hh"
 #include "ui/UIProvider.hh"
 
 using namespace std;
@@ -19,6 +21,9 @@ class OnionMessenger
             PGP::PGP *pgp;
             Server *server;
             thread *serverTh;
+            mutex serverWriteMutex;
+            mutex futureMutex;
+            vector<future<void>> futures;
 
             string LoginUser(void);
             string ID;
@@ -26,7 +31,10 @@ class OnionMessenger
         public:
             OnionMessenger(bool usetui, string priv, string pub);
             void Loop(void);
-            void handleCommand(char *msg);
+            void HandleCommand(char *msg);
+            void HandleAsync(Packet::Msg *msg);
+            void HandleAsync(Packet::HandShake *hs);
+            void CleanFuture(void);
     };
 }
 #endif

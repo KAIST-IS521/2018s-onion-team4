@@ -1,17 +1,70 @@
 #include "OnionMessenger.hh"
 #include "ui/tui.hh"
+#include <algorithm>
 #include <string>
 #include <unistd.h>
 
-namespace OnionMessenger {
+namespace MessageHandler {
+    void handleHandShake(void *aux, Packet::Packet *packet) {
+        auto messenger = static_cast<OnionMessenger::OnionMessenger *>(aux);
+        auto handshake = static_cast<Packet::HandShake *>(packet);
+        messenger->HandleAsync(handshake);
+    }
 
-    bool handleServer(Server *server, ReadCTX *ctx) {
-        return 1;
+    void handleMsg(void *aux, Packet::Packet *packet) {
+        auto messenger = static_cast<OnionMessenger::OnionMessenger *>(aux);
+        auto msg = static_cast<Packet::Msg *>(packet);
+        messenger->HandleAsync(msg);
+    }
+}
+
+namespace OnionMessenger {
+    bool handleServer(Server *server, ReadCTX *ctx, void *aux) {
+        Packet::Packet *packet = Packet::Unserialize(ctx);
+        int ret = 1;
+        if (packet->isReady()) {
+            switch (packet->getType()) {
+                case HANDSHAKE:
+                    MessageHandler::handleHandShake(aux, packet);
+                    break;
+                case MSG:
+                    MessageHandler::handleMsg(aux, packet);
+                    break;
+                //case IMG:
+                // TODO
+                default:
+                    ret = 0;
+                    break;
+            }
+        }
+        return ret;
     };
 
     void handleCLI(char *in, void *aux) {
         auto messenger = static_cast<OnionMessenger *>(aux);
-        messenger->handleCommand(in);
+        messenger->HandleCommand(in);
+    }
+
+    void OnionMessenger::HandleAsync(Packet::Msg *msg) {
+        string ct(msg->GetMessage(), msg->GetMessageLength());
+        auto future = async([this, &ct] ()
+                { provider->PushMessage(pgp->Decrypt(ct)); });
+        futureMutex.lock();
+        futures.push_back(move(future));
+        futureMutex.unlock();
+    }
+
+    void OnionMessenger::HandleAsync(Packet::HandShake *hs) {
+        // TODO
+    }
+
+    void OnionMessenger::CleanFuture(void) {
+        futureMutex.lock();
+        auto filt =
+            [](const future<void>& f)
+            { return f.wait_for(chrono::seconds(0)) == future_status::ready; };
+        futures.erase(remove_if(futures.begin(), futures.end(), filt));
+        futureMutex.unlock();
     }
 
     string OnionMessenger::LoginUser(void) {
@@ -47,11 +100,11 @@ namespace OnionMessenger {
     }
 
     void OnionMessenger::InitServer(void) {
-        server = newServer(1234, handleServer);
+        server = newServer(1234, handleServer, this);
         serverTh = new thread(ServerLoop, server);
     }
 
-    void OnionMessenger::handleCommand(char *msg) {
+    void OnionMessenger::HandleCommand(char *msg) {
         if (!msg) return;
         string input;
         string cmd(""), id("");
@@ -59,7 +112,6 @@ namespace OnionMessenger {
         auto nptr = input.find(" ");
         if (nptr != string::npos) {
             cmd = input.substr(0, nptr);
-
             input = input.substr(nptr+1);
             nptr = input.find(" ");
             if (nptr != string::npos) {
