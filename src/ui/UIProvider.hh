@@ -12,6 +12,8 @@ namespace UI {
             virtual void UserInputLoop(string uid, string info,
                     void (*handler)(char *, void *), void *aux) = 0;
             virtual void PushMessage(char *msg) = 0;
+            void PushMessage(const char *msg) { PushMessage((char *)msg); };
+            void PushMessage(string msg) { PushMessage(msg.c_str()); };
             virtual void PushError(char *msg) = 0;
     };
 }
