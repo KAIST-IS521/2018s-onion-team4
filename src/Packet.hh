@@ -18,14 +18,16 @@ namespace Packet {
         private:
             bool ready;
             int type;
+            int fd;
         public:
-            Packet(int t) : ready(false), type(t) { };
+            Packet(int t, int fd) : ready(false), type(t), fd(fd) { };
             ~Packet() {}
             virtual char *Serialize() = 0;
             virtual void ContinueBuild(ReadCTX *ctx) = 0;
-            int getType() { return type; };
-            int isReady() { return ready; };
-            void setReady() { ready = true; };
+            int GetType() { return type; };
+            int GetFd() { return fd; };
+            int IsReady() { return ready; };
+            void SetReady() { ready = true; };
     };
 
     class HandShake : public Packet
@@ -35,14 +37,18 @@ namespace Packet {
             uint32_t id_length, pubkey_length, connected_nodes;
             char* id, *pubkey;
             uint32_t* node_ips;
+            // TODO: We need ip of the client.
+            // TODO: Add ip field into packet.
+            uint32_t ip;
         public:
             char *Serialize(void);
-            string getId(void);
-            string getPubKey(void);
-            vector<string> getConnectedNodes(void);
+            string GetId(void);
+            string GetPubKey(void);
+            int GetIp(void);
+            vector<string> GetConnectedNodes(void);
             void ContinueBuild(ReadCTX *ctx);
 
-            HandShake() : Packet(HANDSHAKE) { }
+            HandShake(int t) : Packet(HANDSHAKE, t) { }
             ~HandShake() { }
     };
 
@@ -56,7 +62,7 @@ namespace Packet {
             char *Serialize(void);
             string GetMessage(void);
             void ContinueBuild(ReadCTX *ctx);
-            Msg() : Packet(MSG) {};
+            Msg(int t) : Packet(MSG, t) {};
             ~Msg();
     };
 

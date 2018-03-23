@@ -4,17 +4,15 @@
 #include <stdio.h>
 #include "Packet.hh"
 namespace Packet {
-
-
     Packet* Unserialize(ReadCTX *ctx) {
         Packet *packet;
         int type;
         if (!ctx->aux) {
             CTXRead(ctx, (char *)&type, 1);
             if (type == HANDSHAKE) {
-                packet = new HandShake();
+                packet = new HandShake(ctx->fd);
             } else if(type == MSG) {
-                packet = new Msg();
+                packet = new Msg(ctx->fd);
             } else {
                 return NULL;
             }
@@ -52,7 +50,7 @@ namespace Packet {
             CTXRead(ctx, message, length);
             // Release unused buffer
             CTXDiscard(ctx);
-            setReady();
+            SetReady();
             ctx->aux = NULL;
             return;
         }
