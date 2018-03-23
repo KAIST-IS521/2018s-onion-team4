@@ -6,6 +6,7 @@
 
 #define HANDSHAKE 0
 #define MSG 1
+#define IMG 2
 namespace Packet {
     class Packet
     {
@@ -25,6 +26,8 @@ namespace Packet {
 
     class HandShake : public Packet
     {
+        private:
+            int state = 0;
         public:
             uint32_t id_length, pubkey_length, connected_nodes;
             char* id, *pubkey;
