@@ -37,67 +37,51 @@ namespace PGP {
     void PGP::get_passphrase_info(void) {
         gpgme_error_t err;
         gpgme_ctx_t ctx;
+        gpgme_data_t cipher_text, plain_text;
+        gpgme_data_t keydata;
+        gpgme_import_result_t import_result;
 
         err = gpgme_new(&ctx);
         fail_if_err(err);
         gpgme_set_pinentry_mode(ctx, GPGME_PINENTRY_MODE_LOOPBACK);
         gpgme_set_armor(ctx, 1);
         gpgme_set_passphrase_cb(ctx, get_passphrase_info_cb, (void *)this);
-        this->Decrypt(this->Encrypt("a"));
-    }
-
-    void PGP::InitPrikey(string prikey) {
-        ifstream pri(prikey);
-
-        priArmored.assign((istreambuf_iterator<char>(pri)),
-                std::istreambuf_iterator<char>());
-
-        /*
-        gpgme_error_t err;
-        gpgme_data_t keydata;
-        gpgme_import_result_t import_result;
-
+        
         err = gpgme_data_new_from_mem(&keydata,
                 priArmored.c_str(), priArmored.size(), 0);
         fail_if_err(err);
 
         err = gpgme_op_import(ctx, keydata);
         fail_if_err(err);
-
         import_result = gpgme_op_import_result(ctx);
         err = gpgme_get_key(ctx, import_result -> imports -> fpr, &privkey, 1);
-        get_passphrase_info();
-        */
+        string t = Encrypt("a");
+        gpgme_data_new_from_mem(&cipher_text, t.c_str(), t.size(), 1);
+        gpgme_data_new(&plain_text);
+        gpgme_op_decrypt(ctx, cipher_text, plain_text);
+    }
+
+    void PGP::InitPrikey(string prikey) {
+        priArmored.assign(prikey);
+
     }
 
     void PGP::InitPubkey(string pubkey) {
-        ifstream pub(pubkey);
-        pubArmored.assign((istreambuf_iterator<char>(pub)),
-                std::istreambuf_iterator<char>());
+        pubArmored.assign(pubkey);
     }
-
-    /*
-    void PGP::InitCTX(void) {
-        gpgme_error_t err;
-        err = gpgme_new(&ctx);
-        fail_if_err(err);
-        gpgme_set_pinentry_mode(ctx, GPGME_PINENTRY_MODE_LOOPBACK);
-        gpgme_set_armor(ctx, 1);
-    }
-    */
+    
 
     // This provide enc, dec method
     PGP::PGP(string pubkey, string prikey) {
-        //InitCTX();
         InitPubkey(pubkey);
         InitPrikey(prikey);
-        //setPass();
+        get_passphrase_info();
     }
 
     // This only provide enc
     PGP::PGP(string pubkey) {
-        //InitCTX();
         InitPubkey(pubkey);
+        get_passphrase_info();
     }
 
     void PGP::setUid(string uid) {
