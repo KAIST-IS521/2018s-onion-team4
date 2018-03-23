@@ -1,4 +1,5 @@
 #include "Features.hh"
+#include <fstream>
 #include <cstdio>
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -11,34 +12,25 @@ namespace Features {
 
     size_t callbackfunction(void *ptr, size_t size,
             size_t nmemb, void* userdata) {
-        FILE* stream = (FILE*)userdata;
-        if (!stream) {
-            return 0;
+        ofstream *file = static_cast<ofstream *>(userdata);
+        if (file->is_open()) {
+            file->write((const char *)ptr, size * nmemb);
+            return size *nmemb;
         }
-
-        return fwrite((FILE*)ptr, size, nmemb, stream);
+        return 0;
     }
 
-    void Downloadmusic(string urls) {
-        //just wave file
-        const char *filepath = "out.wav";
-        FILE* fp = fopen(filepath, "wb");
-        char *url = &urls[0];
-        if (!fp) {
-            //file open error
-            return;
-        }
-
+    bool download(string url, ofstream *file) {
         CURL* curlCtx = curl_easy_init();
-        curl_easy_setopt(curlCtx, CURLOPT_URL, url);
-        curl_easy_setopt(curlCtx, CURLOPT_WRITEDATA, fp);
+        curl_easy_setopt(curlCtx, CURLOPT_URL, url.c_str());
+        curl_easy_setopt(curlCtx, CURLOPT_WRITEDATA, file);
         curl_easy_setopt(curlCtx, CURLOPT_WRITEFUNCTION, callbackfunction);
         curl_easy_setopt(curlCtx, CURLOPT_FOLLOWLOCATION, 1);
 
         CURLcode rc = curl_easy_perform(curlCtx);
         if (rc) {
             //failed to download
-            return;
+            return false;
         }
 
         long res_code = 0;
@@ -46,48 +38,31 @@ namespace Features {
         if (!((res_code == 200 || res_code == 201) &&
             rc != CURLE_ABORTED_BY_CALLBACK)) {
             //page error
+            return false;
         }
 
         curl_easy_cleanup(curlCtx);
 
-        fclose(fp);
-        Exemusic(filepath);
+        file->close();
+        return true;
     }
 
-    void Downloadimage(string urls) {
-        const char *filepath = "out.jpg";
-        FILE* fp = fopen(filepath, "wb");
-        char *url=&urls[0];
-        if (!fp) {
-            //file open error
-            return;
+    void Downloadmusic(string url) {
+        //just wave file
+        string filepath = "out.wav";
+        ofstream file(filepath);
+        if (file.is_open() && download(url, &file)) {
+            Exemusic(filepath.c_str());
         }
-
-        CURL* curlCtx = curl_easy_init();
-        curl_easy_setopt(curlCtx, CURLOPT_URL, url);
-        curl_easy_setopt(curlCtx, CURLOPT_WRITEDATA, fp);
-        curl_easy_setopt(curlCtx, CURLOPT_WRITEFUNCTION, callbackfunction);
-        curl_easy_setopt(curlCtx, CURLOPT_FOLLOWLOCATION, 1);
-
-        CURLcode rc = curl_easy_perform(curlCtx);
-        if (rc) {
-            //failed to download
-            return;
-        }
-
-        long res_code = 0;
-        curl_easy_getinfo(curlCtx, CURLINFO_RESPONSE_CODE, &res_code);
-        if (!((res_code == 200 || res_code == 201) &&
-                    rc != CURLE_ABORTED_BY_CALLBACK)) {
-            //page error
-        }
-
-        curl_easy_cleanup(curlCtx);
-
-        fclose(fp);
-        Asciiart(filepath);
     }
 
+    void Downloadimage(string url) {
+        string filepath = "out.jpg";
+        ofstream file(filepath);
+        if (file.is_open() && download(url, &file)) {
+            Asciiart(filepath.c_str());
+        }
+    }
 
     void Exemusic(const char *filepath) {
         pid_t pid;
