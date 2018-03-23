@@ -15,6 +15,8 @@ namespace Packet {
                 packet = new HandShake();
             } else if(type == MSG) {
                 packet = new Msg();
+            } else if(type == IMG) {
+                packet = new Img();
             } else {
                 return NULL;
             }
@@ -162,6 +164,52 @@ namespace Packet {
             return;
         }
         ctx->aux = this;
- 
+
+    }
+    
+    char* Img::Serialize() {
+        size_t lth = 5 + this->url_length;
+
+        char* packet = (char *) malloc(lth);
+
+        *(uint8_t *) (packet + 0) = IMG;
+        *(uint32_t *) (packet + 1) = htonl(this->url_length);
+        if(this->url)
+            memcpy(packet + 5, this->url, this->url_length);
+
+        return packet;
+    }
+
+    void Img::ContinueBuild(ReadCTX *ctx) {
+        int l;
+        // state for parse length
+        if (state == 0 && CTXGetsz(ctx) >= 4) {
+            CTXRead(ctx, (char *)&l, 4);
+            url_length = ntohl(l);
+            state = 1;
+        }
+        // state for parse message
+        if (state == 1 && CTXGetsz(ctx) >= url_length) {
+            url = (char *)calloc(1, length + 1);
+            CTXRead(ctx, url, url_length);
+            // Release unused buffer
+            CTXDiscard(ctx);
+            setReady();
+            ctx->aux = NULL;
+            return;
+        }
+        ctx->aux = this;
+    }
+
+    char *Img::GetUrl(void) {
+        return url;
+    }
+
+    int Img::GetUrlLength(void) {
+        return url_length;
+    }
+
+    Img::~Img(void) {
+        if (url) free(url);
     }
 }
