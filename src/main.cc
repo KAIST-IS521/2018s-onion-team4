@@ -58,14 +58,15 @@ int main(int argc, char **argv) {
                 break;
         }
     }
-    ifstream privkey(priv), pubkey(pub);
+    ifstream privkey(priv);
+    ifstream pubkey(pub);
 
     if (priv.empty() || pub.empty()) {
         usage(argv[0]);
     } else if (!privkey.is_open()) {
-        cerr << argv[0] << ": " << priv << " : No such file."
+        cerr << argv[0] << ": " << priv << " : No such file.";
     } else if (!pubkey.is_open()) {
-        cerr << argv[0] << ": " << priv << " : No such file."
+        cerr << argv[0] << ": " << priv << " : No such file.";
     }
     string privData((std::istreambuf_iterator<char>(privkey)),
                      std::istreambuf_iterator<char>());
