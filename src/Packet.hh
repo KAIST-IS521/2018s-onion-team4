@@ -21,13 +21,13 @@ namespace Packet {
             int fd;
         public:
             Packet(int t, int fd) : ready(false), type(t), fd(fd) { };
-            ~Packet() {}
-            virtual char *Serialize() = 0;
+            ~Packet(void) {}
+            virtual pair<char *, size_t> Serialize(void) = 0;
             virtual void ContinueBuild(ReadCTX *ctx) = 0;
-            int GetType() { return type; };
-            int GetFd() { return fd; };
-            int IsReady() { return ready; };
-            void SetReady() { ready = true; };
+            int GetType(void) { return type; };
+            int GetFd(void) { return fd; };
+            int IsReady(void) { return ready; };
+            void SetReady(void) { ready = true; };
     };
 
     class HandShake : public Packet
@@ -41,15 +41,15 @@ namespace Packet {
             // TODO: Add ip field into packet.
             uint32_t ip;
         public:
-            char *Serialize(void);
+            pair<char *, size_t> Serialize(void);
             string GetId(void);
             string GetPubKey(void);
             int GetIp(void);
-            vector<string> GetConnectedNodes(void);
+            vector<uint32_t> GetConnectedNodes(void);
             void ContinueBuild(ReadCTX *ctx);
 
             HandShake(int t) : Packet(HANDSHAKE, t) { }
-            ~HandShake() { }
+            ~HandShake(void) { }
     };
 
     class Msg : public Packet
@@ -59,11 +59,11 @@ namespace Packet {
             uint32_t length;
             char *message = NULL;
         public:
-            char *Serialize(void);
+            pair<char *, size_t> Serialize(void);
             string GetMessage(void);
             void ContinueBuild(ReadCTX *ctx);
             Msg(int t) : Packet(MSG, t) {};
-            ~Msg();
+            ~Msg(void);
     };
 
     Packet *Unserialize(ReadCTX *ctx);

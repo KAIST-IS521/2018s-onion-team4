@@ -4,6 +4,48 @@
 #include <stdio.h>
 #include "Packet.hh"
 namespace Packet {
+    class PacketBuilder
+    {
+        private:
+            char *buf = NULL;
+            size_t size = 0;
+        public:
+            PacketBuilder& operator<<(uint32_t x) {
+                int width = sizeof(uint32_t);
+                buf = (char *)realloc(buf, size + width);
+                memcpy(buf + size, &x, width);
+                size += width;
+                return *this;
+            };
+            PacketBuilder& operator<<(int x) {
+                int width = sizeof(int);
+                buf = (char *)realloc(buf, size + width);
+                memcpy(buf + size, &x, width);
+                size += width;
+                return *this;
+            };
+            PacketBuilder& operator<<(uint8_t x) {
+                int width = sizeof(uint8_t);
+                buf = (char *)realloc(buf, size + width);
+                memcpy(buf + size, &x, width);
+                size += width;
+                return *this;
+            };
+            PacketBuilder& operator<<(string x) {
+                int width = x.size();
+                buf = (char *)realloc(buf, size + width);
+                memcpy(buf + size, x.c_str(), width);
+                size += width;
+                return *this;
+            };
+
+            pair<char *, size_t> Finalize(void) {
+                return pair<char *, size_t>(buf, size);
+            };
+    };
+
+
+
     Packet* Unserialize(ReadCTX *ctx) {
         Packet *packet;
         int type;
@@ -23,17 +65,10 @@ namespace Packet {
         return packet;
     }
 
-    char* Msg::Serialize() {
-        size_t lth = 5 + this->length;
-
-        char* packet = (char *) malloc(lth);
-
-        *(uint8_t *) (packet + 0) = MSG;
-        *(uint32_t *) (packet + 1) = htonl(this->length);
-        if(this->message)
-            memcpy(packet + 5, this->message, this->length);
-
-        return packet;
+    pair<char *, size_t> Msg::Serialize(void) {
+        PacketBuilder builder;
+        builder << (uint8_t) MSG << htonl(length) << string(message, length);
+        return builder.Finalize();
     }
 
     void Msg::ContinueBuild(ReadCTX *ctx) {
@@ -65,31 +100,19 @@ namespace Packet {
         if (message) free(message);
     }
 
-    char * HandShake::Serialize(void) {
-        size_t lth = 13 + this->id_length + this->pubkey_length +
-                      sizeof(uint32_t) * this->connected_nodes;
+    pair<char *, size_t> HandShake::Serialize(void) {
+        PacketBuilder builder;
+        builder << (uint8_t) HANDSHAKE
+                << htonl(id_length)
+                << string(id, id_length)
+                << htonl(pubkey_length)
+                << string(pubkey, pubkey_length)
+                << htonl(connected_nodes);
 
-        char* packet = (char *) malloc(lth);
-
-        *(uint8_t *) (packet + 0) = HANDSHAKE;
-
-        *(uint32_t *) (packet + 1) = htonl(this->id_length);
-        if(this->id)
-            memcpy(packet + 5, this->id, this->id_length);
-
-        *(uint32_t *) (packet + 5 + this->id_length) = htonl(this->pubkey_length);
-        if(this->pubkey)
-            memcpy(packet + 9 + this->id_length, this->pubkey, this->pubkey_length);
-
-        *(uint32_t *) (packet + 9 + this->id_length + this->pubkey_length)
-                                                  = htonl(this->connected_nodes);
-        if(this->node_ips){
-            for(unsigned int i = 0; i < this->connected_nodes; i++){
-                *(uint32_t *) (packet + 13 + sizeof(uint32_t) * i + this->id_length + this->pubkey_length)
-                     = htonl(this->node_ips[i]);
-            }
+        for (unsigned int i = 0; i < connected_nodes; i++) {
+            builder << htonl(node_ips[i]);
         }
-        return packet;
+        return builder.Finalize();
     }
 
     void HandShake::ContinueBuild(ReadCTX *ctx) {
