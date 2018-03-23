@@ -122,9 +122,9 @@ namespace OnionMessenger {
         if (!cmd.compare("/msg")) {
             // TODO: handle msg
         } else if(!cmd.compare("/image")) {
-            Features::Downloadimage(id, input);
+            // TODO: handle image
         } else if(!cmd.compare("/music")) {
-            Features::Downloadmusic(id, input);
+            //TODO:handle music
         } else {
             auto err = ("Unknown Command: " + string(msg));
             provider->PushMessage((char *)err.c_str());
