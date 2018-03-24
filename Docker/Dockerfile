@@ -7,8 +7,16 @@ RUN DIST=xenial && \
     apt-get update && \
     apt-get install -y --no-install-recommends --no-install-suggests \
     make git libgpgme11-dev libncurses-dev g++ libcurl4-openssl-dev \
+    apt-get install -y golang-go \
+    mkdir bin/go \
+    export GOPATH=bin/go \
+    export PATH=$PATH:$GOPATH/bin \
+    go get github.com/zyxar/image2ascii \
+    apt-get install -y libcurl4-openssl-dev \
+    apt-get install -y libcurl4-gnutls-dev \
     alsa-utils
 RUN rm -rf /var/lib/apt/lists/* && \
     apt-get clean
 WORKDIR /root
 CMD ["/bin/bash"]
+ENV PATH /bin:$HOME/go

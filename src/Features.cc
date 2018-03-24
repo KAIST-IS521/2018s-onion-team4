@@ -73,7 +73,7 @@ namespace Features {
     }
 
     void Asciiart(const char *filepath) {
-        const char *path = "/bin/image2ascii" ;
+        const char *path = "/bin/go/bin/image2ascii" ;
         const char *argv[] = {"image2ascii", "-h", "60", filepath, NULL};
         execute(path, (char* const*)argv);
         // Done
