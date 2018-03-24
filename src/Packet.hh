@@ -12,6 +12,13 @@
 #define IMG 2
 
 using namespace std;
+
+namespace Socket {
+  int ConnectTo(int port, string ip);
+  int ConnectTo(int port, uint32_t ip);
+  uint32_t GetIPaddr(int fd);
+}
+
 namespace Packet {
     class Packet
     {
