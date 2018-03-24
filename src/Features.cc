@@ -10,6 +10,16 @@
 namespace Features {
     void Asciiart(const char *filepath);
 
+    int execute(const char *path, char *const argv[]) {
+        pid_t pid;
+        int ret = posix_spawn(&pid, path, NULL, NULL, argv, NULL);
+
+        int status;
+        waitpid(pid, &status, 0);
+
+        return ret;
+    }
+
     size_t callbackfunction(void *ptr, size_t size,
             size_t nmemb, void* userdata) {
         ofstream *file = static_cast<ofstream *>(userdata);
@@ -59,23 +69,10 @@ namespace Features {
     }
 
     void Asciiart(const char *filepath) {
-        pid_t pid;
-        int status;
         const char *path = "/bin/image2ascii" ;
-        const char *argv[] = {"image2ascii","-h","60",filepath,NULL};
-        execute(path, argv);
+        const char *argv[] = {"image2ascii", "-h", "60", filepath, NULL};
+        execute(path, (char* const*)argv);
         // Done
         // verification is required
     }
-
-    int execute(const char *path, char *const argv[]) {
-        pid_t pid;
-        int ret = posix_spawn(&pid, path, NULL, NULL, argv, NULL);
-
-        int status;
-        waitpid(pid, &status, 0);
-
-        return ret;
-    }
-
 }
