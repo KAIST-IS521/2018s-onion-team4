@@ -5,6 +5,6 @@
 using namespace std;
 
 namespace Features {
-    void DisplayAArt(string url);
+    string DisplayAArt(string url);
 }
 #endif

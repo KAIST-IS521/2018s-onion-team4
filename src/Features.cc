@@ -8,7 +8,7 @@
 #include <unistd.h>
 
 namespace Features {
-    void Asciiart(const char *filepath);
+    string Asciiart(const char *filepath);
 
     int execute(const char *path, char *const argv[]) {
         pid_t pid;
@@ -57,7 +57,7 @@ namespace Features {
         return true;
     }
 
-    void DisplayAArt(string url) {
+    string DisplayAArt(string url) {
         char fname[15] = "out_XXXXXX\0";
         char *ptr;
         ptr = mktemp(fname);
@@ -68,15 +68,16 @@ namespace Features {
         ofstream file(filepath);
 
         if (file.is_open() && download(url, &file)) {
-            Asciiart(filepath.c_str());
+            return Asciiart(filepath.c_str());
         }
     }
 
-    void Asciiart(const char *filepath) {
+    string Asciiart(const char *filepath) {
         const char *path = "/bin/image2ascii" ;
         const char *argv[] = {"image2ascii", "-h", "60", filepath, NULL};
         execute(path, (char* const*)argv);
         // Done
         // verification is required
+        return "NOT IMPLEMENTED";
     }
 }
