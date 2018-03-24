@@ -1,18 +1,13 @@
 #ifndef __SOCKET__
 #define __SOCKET__
-#include <string.h>
-#include <unistd.h>
-#include <netinet/in.h>
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <time.h>
-#include <fcntl.h>
-#include <arpa/inet.h>
+#include <cstring>
+#include <string>
 
 using namespace std;
 
 namespace Socket{
-  int ConnectServer(int port,string ip);
-  uint32_t Getipaddres(int fd);
+  int ConnectTo(int port, string ip);
+  int ConnectTo(int port, uint32_t ip);
+  uint32_t GetIPaddr(int fd);
 }
 #endif
