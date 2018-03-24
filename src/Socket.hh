@@ -13,6 +13,6 @@ using namespace std;
 
 namespace Socket{
   int ConnectServer(int port,string ip);
-  struct sockaddr_in *Getipaddres(int fd);
+  uint32_t Getipaddres(int fd);
 }
 #endif

@@ -35,13 +35,13 @@ namespace Socket{
 
       return client_fd;
   }
-  struct sockaddr_in *Getipaddres(int fd){
+  uint32_t Getipaddres(int fd){
     int len;
     struct sockaddr_in temp_addr;
 
     getpeername(fd, (struct sockaddr *)&temp_addr, (socklen_t*)&len);
 
-    return &temp_addr;
+    return ntohl(temp_addr.sin_addr.s_addr);
     //struct sockaddr_in temp_addr=Getipaddres(fd);
   } //print ("%s",inet_ntoa(temp_addr));
 
