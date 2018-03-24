@@ -1,8 +1,7 @@
 #include <arpa/inet.h>
-#include <stdlib.h>
-#include <string.h>
-#include <stdio.h>
+#include <cstring>
 #include "Packet.hh"
+
 namespace Packet {
     class PacketBuilder
     {
@@ -111,11 +110,11 @@ namespace Packet {
     }
 
     HandShake::HandShake(string _id, vector<uint32_t> cNodes,
-            string pubkey) : Packet(HANDSHAKE) {
+            string pk) : Packet(HANDSHAKE) {
             id = strdup(_id.c_str());
             id_length = _id.size();
-            pubkey = strdup(pubkey.c_str());
-            pubkey_length = pubkey.size();
+            pubkey = strdup(pk.c_str());
+            pubkey_length = pk.size();
             connected_nodes = cNodes.size();
             node_ips = (uint32_t *)calloc(sizeof(uint32_t), connected_nodes);
             std::copy(cNodes.begin(), cNodes.end(), node_ips);

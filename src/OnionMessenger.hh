@@ -40,6 +40,7 @@ namespace OnionMessenger {
             Server *server;
 
             thread *serverTh;
+            mutex serverMutex;
             mutex serverWriteMutex;
 
             mutex futureMutex;
@@ -50,7 +51,6 @@ namespace OnionMessenger {
             string LoginUser(void);
             string ID;
             void InitServer(void);
-            void HandShake(uint32_t ip);
             void SendPacket(Packet::Packet *packet, int fd);
             bool HandleChatAsync(string msg, string user);
         public:
@@ -60,6 +60,8 @@ namespace OnionMessenger {
             void HandleAsync(Packet::Msg *msg);
             bool HandleHandShake(Packet::HandShake *hs);
             void CleanFuture(void);
+            void HandShake(uint32_t ip);
+            void HandShake(string ip);
     };
 }
 #endif

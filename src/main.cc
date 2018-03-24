@@ -76,5 +76,8 @@ int main(int argc, char **argv) {
 
     auto onion =
         new OnionMessenger::OnionMessenger(useTUI, privData, pubData);
+    if (!node.empty()) {
+        onion->HandShake(node);
+    }
     onion->Loop();
 }

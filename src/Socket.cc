@@ -8,7 +8,7 @@
 #include <sys/types.h>
 #include <arpa/inet.h>
 
-namespace Socket{
+namespace Socket {
   int ConnectServerInternal(int port, uint32_t ip) {
       int client_fd;
       struct sockaddr_in client_addr;

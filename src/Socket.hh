@@ -5,7 +5,7 @@
 
 using namespace std;
 
-namespace Socket{
+namespace Socket {
   int ConnectTo(int port, string ip);
   int ConnectTo(int port, uint32_t ip);
   uint32_t GetIPaddr(int fd);

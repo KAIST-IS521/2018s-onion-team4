@@ -1,4 +1,5 @@
 #include "OnionMessenger.hh"
+#include "Socket.hh"
 #include "ui/tui.hh"
 #include <algorithm>
 #include <string>
@@ -66,9 +67,9 @@ namespace OnionMessenger {
     }
 
     void OnionMessenger::SendPacket(Packet::Packet *packet, int fd) {
-        serverWriteMutex.lock();
+        serverMutex.lock();
         packet->SendFd(server, fd);
-        serverWriteMutex.unlock();
+        serverMutex.unlock();
     }
 
     bool OnionMessenger::HandleChatAsync(string msg, string user) {
@@ -102,10 +103,7 @@ namespace OnionMessenger {
                     HandShake(s);
                 }
             }
-            /* TODO: get ip from fd
-            auto ip = hs->GetIp();
-            */
-            auto ip = 0;
+            auto ip = Socket::GetIPaddr(hs->GetFd());
             auto user = new UserRepresentation(hs->GetId(), hs->GetPubKey(),
                                                ip, hs->GetFd());
             users[hs->GetId()] = user;
@@ -114,15 +112,33 @@ namespace OnionMessenger {
         return false;
     }
 
+    void OnionMessenger::HandShake(string ip) {
+        vector<uint32_t> cNodes;
+
+        for (auto u : users) {
+            cNodes.push_back(u.second->GetIp());
+        }
+        int fd = Socket::ConnectTo(PORT, ip);
+        // Not a thread-safe add lock!
+        serverMutex.lock();
+        ServerFDadd(server, fd);
+        serverMutex.unlock();
+        auto hs = new Packet::HandShake(ID, cNodes, pgp->GetPub());
+        SendPacket(hs, fd);
+    }
+
     void OnionMessenger::HandShake(uint32_t ip) {
         vector<uint32_t> cNodes;
 
         for (auto u : users) {
             cNodes.push_back(u.second->GetIp());
         }
-        // TODO: create connection as fd.
+        int fd = Socket::ConnectTo(PORT, ip);
+        serverMutex.lock();
+        ServerFDadd(server, fd);
+        serverMutex.unlock();
         auto hs = new Packet::HandShake(ID, cNodes, pgp->GetPub());
-        //SendPacket(hs, fd);
+        SendPacket(hs, fd);
     }
 
     void OnionMessenger::CleanFuture(void) {
@@ -164,6 +180,7 @@ namespace OnionMessenger {
             // provider = new CUI::CUIProvider();
         }
         ID = LoginUser();
+        InitServer();
     }
 
     void OnionMessenger::InitServer(void) {
@@ -191,8 +208,6 @@ namespace OnionMessenger {
             // TODO: handle msg
         } else if(!cmd.compare("/image")) {
             // TODO: handle image
-        } else if(!cmd.compare("/music")) {
-            //TODO:handle music
         } else {
             auto err = ("Unknown Command: " + string(msg));
             provider->PushMessage((char *)err.c_str());
@@ -200,7 +215,6 @@ namespace OnionMessenger {
     }
 
     void OnionMessenger::Loop(void) {
-        InitServer();
         provider->UserInputLoop(ID, pgp->getPassInfo().substr(0, 8),
                                 handleCLI, this);
     }
