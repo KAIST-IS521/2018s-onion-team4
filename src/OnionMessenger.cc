@@ -86,6 +86,20 @@ namespace OnionMessenger {
         return false;
     }
 
+    bool OnionMessenger::HandleImageAsync(string msg, string user) {
+//        if (users.find(user) != users.end()) {
+//            auto rep = users[user];
+//            auto future = async([this, rep, &msg] ()
+//                    { auto packet = new Packet::Image(rep->Encrypt(msg));
+//                      SendPacket(packet, rep->GetFd()); });
+//            futureMutex.lock();
+//            futures.push_back(move(future));
+//            futureMutex.unlock();
+//            return true;
+//        }
+//        return false;
+    }
+
     bool OnionMessenger::HandleHandShake(Packet::HandShake *hs) {
         string id = hs->GetId();
         // assert no user
@@ -205,9 +219,9 @@ namespace OnionMessenger {
         }
 
         if (!cmd.compare("/msg")) {
-            // TODO: handle msg
+            HandleChatAsync(input, id);
         } else if(!cmd.compare("/image")) {
-            // TODO: handle image
+            HandleImageAsync(input, id);
         } else {
             auto err = ("Unknown Command: " + string(msg));
             provider->PushMessage((char *)err.c_str());

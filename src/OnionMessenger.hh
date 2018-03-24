@@ -53,6 +53,7 @@ namespace OnionMessenger {
             void InitServer(void);
             void SendPacket(Packet::Packet *packet, int fd);
             bool HandleChatAsync(string msg, string user);
+            bool HandleImageAsync(string msg, string user);
         public:
             OnionMessenger(bool usetui, string priv, string pub);
             void Loop(void);
