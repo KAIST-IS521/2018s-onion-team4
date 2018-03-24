@@ -71,18 +71,12 @@ namespace Features {
             return Asciiart(filepath.c_str());
         }
     }
-
-<<<<<<< HEAD
-    void Asciiart(const char *filepath) {
-        const char *path = "/bin/go/bin/image2ascii" ;
-=======
     string Asciiart(const char *filepath) {
-        const char *path = "/bin/image2ascii" ;
->>>>>>> 42e63f886472d367acf286135fe97ba8cdc81966
+        const char *path = "/bin/go/bin/image2ascii" ;
         const char *argv[] = {"image2ascii", "-h", "60", filepath, NULL};
         execute(path, (char* const*)argv);
         // Done
-        // verification is required
+        // verification is requiredi
         return "NOT IMPLEMENTED";
     }
 }
