@@ -74,6 +74,21 @@ namespace Packet {
             ~Msg(void);
     };
 
+    class Img : public Packet
+    {
+        private:
+            int state = 0;
+            uint32_t url_length;
+            char *url = NULL;
+        public:
+            pair<char *, size_t> Serialize(void);
+            char *GetUrl(void);
+            int GetUrlLength(void);
+            void ContinueBuild(ReadCTX *ctx);
+            Img() : Packet(IMG) {};
+            ~Img();
+    };
+
     Packet *Unserialize(ReadCTX *ctx);
 }
 #endif
