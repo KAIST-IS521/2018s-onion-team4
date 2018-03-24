@@ -35,8 +35,7 @@ namespace Socket{
 
       return client_fd;
   }
-  uint32_t Getipaddres(int fd){
-    int len;
+  uint32_t Getipaddres(int fd,int len){
     struct sockaddr_in temp_addr;
 
     getpeername(fd, (struct sockaddr *)&temp_addr, (socklen_t*)&len);
