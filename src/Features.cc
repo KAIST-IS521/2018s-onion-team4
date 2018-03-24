@@ -4,12 +4,10 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <curl/curl.h>
-#include <stdio.h>
 #include <spawn.h>
 #include <unistd.h>
 
 namespace Features {
-    void Exemusic(const char *filepath);
     void Asciiart(const char *filepath);
 
     size_t callbackfunction(void *ptr, size_t size,
@@ -49,17 +47,8 @@ namespace Features {
         return true;
     }
 
-    void Downloadmusic(string id, string url) {
-        //just wave file
-        string filepath = "/tmp/";
-        filepath.append(id).append("_out.wav");
-        ofstream file(filepath);
-        if (file.is_open() && download(url, &file)) {
-            Exemusic(filepath.c_str());
-        }
-    }
-
     void Downloadimage(string id, string url) {
+        // XXX: use mkstemp.
         string filepath = "/tmp/";
         filepath.append(id).append("_out.jpg");
         ofstream file(filepath);
@@ -69,37 +58,16 @@ namespace Features {
         }
     }
 
-    void Exemusic(const char *filepath) {
-        pid_t pid;
-        int status;
-
-        pid = fork();
-        if (pid == -1) { /* Error occured, Exception required */ }
-        else if(pid == 0) { // child
-            //ADD A VOICE PROGRAM
-        }
-        // parent
-        wait(&status);
-    }
-
     void Asciiart(const char *filepath) {
         pid_t pid;
         int status;
-
-        pid = fork();
-        if (pid == -1) { /* Error occured, Exception required */ }
-        else if(pid == 0) { // child
-            //execlp("image2ascii", "image2ascii","-h","60", filepath, NULL); //docker
-            const char *path="/bin/image2ascii" ;
-            char *const argv_A[] = {"image2ascii","-h","60",filepath,NULL};
-            execute(path, argv_A);
-        }
-        // parent
-        wait(&status);
-
+        const char *path = "/bin/image2ascii" ;
+        const char *argv[] = {"image2ascii","-h","60",filepath,NULL};
+        execute(path, argv);
         // Done
         // verification is required
     }
+
     int execute(const char *path, char *const argv[]) {
         pid_t pid;
         int ret = posix_spawn(&pid, path, NULL, NULL, argv, NULL);
