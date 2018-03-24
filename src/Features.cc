@@ -48,9 +48,13 @@ namespace Features {
     }
 
     void Downloadimage(string id, string url) {
-        // XXX: use mkstemp.
+        char fname[15] = "out_XXXXXX\0";
+        char *ptr;
+        ptr = mktemp(fname);
+        string temp;
         string filepath = "/tmp/";
-        filepath.append(id).append("_out.jpg");
+        temp = ptr;
+        filepath.append(temp).append("jpg");
         ofstream file(filepath);
 
         if (file.is_open() && download(url, &file)) {
