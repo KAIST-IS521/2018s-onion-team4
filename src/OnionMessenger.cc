@@ -1,5 +1,6 @@
 #include "OnionMessenger.hh"
 #include "ui/tui.hh"
+#include "ui/cui.hh"
 #include <algorithm>
 #include <string>
 
@@ -7,13 +8,19 @@ namespace MessageHandler {
     bool handleHandShake(void *aux, Packet::Packet *packet) {
         auto messenger = static_cast<OnionMessenger::OnionMessenger *>(aux);
         auto handshake = static_cast<Packet::HandShake *>(packet);
-        return messenger->HandleHandShake(handshake);
+        return messenger->RecvHandShake(handshake);
     }
 
     void handleMsg(void *aux, Packet::Packet *packet) {
         auto messenger = static_cast<OnionMessenger::OnionMessenger *>(aux);
         auto msg = static_cast<Packet::Msg *>(packet);
-        messenger->HandleAsync(msg);
+        messenger->RecvMsgAsync(msg);
+    }
+
+    void handleImg(void *aux, Packet::Packet *packet) {
+        auto messenger = static_cast<OnionMessenger::OnionMessenger *>(aux);
+        auto img = static_cast<Packet::Img *>(packet);
+        messenger->RecvImageAsync(img);
     }
 }
 
@@ -29,8 +36,9 @@ namespace OnionMessenger {
                 case MSG:
                     MessageHandler::handleMsg(aux, packet);
                     break;
-                //case IMG:
-                // TODO
+                case IMG:
+                    MessageHandler::handleImg(aux, packet);
+                    break;
                 default:
                     ret = 0;
                     break;
@@ -56,7 +64,7 @@ namespace OnionMessenger {
         delete pgp;
     }
 
-    void OnionMessenger::HandleAsync(Packet::Msg *msg) {
+    void OnionMessenger::RecvMsgAsync(Packet::Msg *msg) {
         string ct = msg->GetMessage();
         auto future = async([this, &ct] ()
                 { provider->PushMessage(pgp->Decrypt(ct)); });
@@ -65,13 +73,23 @@ namespace OnionMessenger {
         futureMutex.unlock();
     }
 
-    void OnionMessenger::SendPacket(Packet::Packet *packet, int fd) {
-        serverWriteMutex.lock();
-        packet->SendFd(server, fd);
-        serverWriteMutex.unlock();
+    void OnionMessenger::RecvImageAsync(Packet::Img *img) {
+        string ct = img->GetUrl();
+        auto future = async([this, &ct] ()
+                { auto img = Features::DisplayAArt(pgp->Decrypt(ct));
+                  provider->PushMessage(img); });
+        futureMutex.lock();
+        futures.push_back(move(future));
+        futureMutex.unlock();
     }
 
-    bool OnionMessenger::HandleChatAsync(string msg, string user) {
+    void OnionMessenger::SendPacket(Packet::Packet *packet, int fd) {
+        serverMutex.lock();
+        packet->SendFd(server, fd);
+        serverMutex.unlock();
+    }
+
+    bool OnionMessenger::SendMsgAsync(string msg, string user) {
         if (users.find(user) != users.end()) {
             auto rep = users[user];
             auto future = async([this, rep, &msg] ()
@@ -85,7 +103,21 @@ namespace OnionMessenger {
         return false;
     }
 
-    bool OnionMessenger::HandleHandShake(Packet::HandShake *hs) {
+    bool OnionMessenger::SendImageAsync(string img, string user) {
+        if (users.find(user) != users.end()) {
+            auto rep = users[user];
+            auto future = async([this, rep, &img] ()
+                    { auto packet = new Packet::Img(rep->Encrypt(img));
+                      SendPacket(packet, rep->GetFd()); });
+            futureMutex.lock();
+            futures.push_back(move(future));
+            futureMutex.unlock();
+            return true;
+        }
+        return false;
+    }
+
+    bool OnionMessenger::RecvHandShake(Packet::HandShake *hs) {
         string id = hs->GetId();
         // assert no user
         bool find;
@@ -102,10 +134,7 @@ namespace OnionMessenger {
                     HandShake(s);
                 }
             }
-            /* TODO: get ip from fd
-            auto ip = hs->GetIp();
-            */
-            auto ip = 0;
+            auto ip = Socket::GetIPaddr(hs->GetFd());
             auto user = new UserRepresentation(hs->GetId(), hs->GetPubKey(),
                                                ip, hs->GetFd());
             users[hs->GetId()] = user;
@@ -114,15 +143,33 @@ namespace OnionMessenger {
         return false;
     }
 
+    void OnionMessenger::HandShake(string ip) {
+        vector<uint32_t> cNodes;
+
+        for (auto u : users) {
+            cNodes.push_back(u.second->GetIp());
+        }
+        int fd = Socket::ConnectTo(PORT, ip);
+        // Not a thread-safe add lock!
+        serverMutex.lock();
+        ServerFDadd(server, fd);
+        serverMutex.unlock();
+        auto hs = new Packet::HandShake(ID, cNodes, pgp->GetPub());
+        SendPacket(hs, fd);
+    }
+
     void OnionMessenger::HandShake(uint32_t ip) {
         vector<uint32_t> cNodes;
 
         for (auto u : users) {
             cNodes.push_back(u.second->GetIp());
         }
-        // TODO: create connection as fd.
+        int fd = Socket::ConnectTo(PORT, ip);
+        serverMutex.lock();
+        ServerFDadd(server, fd);
+        serverMutex.unlock();
         auto hs = new Packet::HandShake(ID, cNodes, pgp->GetPub());
-        //SendPacket(hs, fd);
+        SendPacket(hs, fd);
     }
 
     void OnionMessenger::CleanFuture(void) {
@@ -159,11 +206,12 @@ namespace OnionMessenger {
         cout << " Done." << endl;
 
         if (usetui) {
-           provider = new TUI::TUIProvider();
+            provider = new TUI::TUIProvider();
         } else {
-            // provider = new CUI::CUIProvider();
+            provider = new CUI::CUIProvider();
         }
         ID = LoginUser();
+        InitServer();
     }
 
     void OnionMessenger::InitServer(void) {
@@ -188,11 +236,9 @@ namespace OnionMessenger {
         }
 
         if (!cmd.compare("/msg")) {
-            // TODO: handle msg
+            SendMsgAsync(input, id);
         } else if(!cmd.compare("/image")) {
-            // TODO: handle image
-        } else if(!cmd.compare("/music")) {
-            //TODO:handle music
+            SendImageAsync(input, id);
         } else {
             auto err = ("Unknown Command: " + string(msg));
             provider->PushMessage((char *)err.c_str());
@@ -200,7 +246,6 @@ namespace OnionMessenger {
     }
 
     void OnionMessenger::Loop(void) {
-        InitServer();
         provider->UserInputLoop(ID, pgp->getPassInfo().substr(0, 8),
                                 handleCLI, this);
     }

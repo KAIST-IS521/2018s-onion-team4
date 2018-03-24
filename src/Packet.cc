@@ -1,8 +1,53 @@
 #include <arpa/inet.h>
-#include <stdlib.h>
-#include <string.h>
-#include <stdio.h>
+#include <cstring>
+#include <time.h>
+#include <fcntl.h>
+#include <string>
+#include <unistd.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
+#include <sys/types.h>
 #include "Packet.hh"
+
+namespace Socket {
+  int ConnectServerInternal(int port, uint32_t ip) {
+      int client_fd;
+      struct sockaddr_in client_addr;
+
+      client_fd = socket(AF_INET, SOCK_STREAM, 0);
+
+      client_addr.sin_addr.s_addr = ip;
+      client_addr.sin_family = AF_INET;
+      client_addr.sin_port = htons(port);
+
+      if (connect(client_fd, (struct sockaddr *)&client_addr,
+                  sizeof(client_addr)) == -1)
+      {
+          close(client_fd);
+          return -1;
+      }
+
+      return client_fd;
+  }
+
+  int ConnectTo(int port, string ip) {
+      return ConnectServerInternal(port, inet_addr(ip.c_str()));
+  }
+
+  int ConnectTo(int port, uint32_t ip) {
+      return ConnectServerInternal(port, htonl(ip));
+  }
+
+  uint32_t GetIPaddr(int fd) {
+    struct sockaddr_in temp_addr;
+    socklen_t len = sizeof(struct sockaddr_in);
+
+    getpeername(fd, (struct sockaddr *)&temp_addr, &len);
+
+    return ntohl(temp_addr.sin_addr.s_addr);
+  }
+}
+
 namespace Packet {
     class PacketBuilder
     {
@@ -53,6 +98,8 @@ namespace Packet {
                 packet = new HandShake(ctx->fd);
             } else if(type == MSG) {
                 packet = new Msg(ctx->fd);
+            } else if(type == IMG) {
+                packet = new Img(ctx->fd);
             } else {
                 return NULL;
             }
@@ -111,11 +158,11 @@ namespace Packet {
     }
 
     HandShake::HandShake(string _id, vector<uint32_t> cNodes,
-            string pubkey) : Packet(HANDSHAKE) {
+            string pk) : Packet(HANDSHAKE) {
             id = strdup(_id.c_str());
             id_length = _id.size();
-            pubkey = strdup(pubkey.c_str());
-            pubkey_length = pubkey.size();
+            pubkey = strdup(pk.c_str());
+            pubkey_length = pk.size();
             connected_nodes = cNodes.size();
             node_ips = (uint32_t *)calloc(sizeof(uint32_t), connected_nodes);
             std::copy(cNodes.begin(), cNodes.end(), node_ips);
@@ -176,5 +223,90 @@ namespace Packet {
             hs->node_ips[i] = temp;
         }
         */
+        unsigned int il, kl, cn;
+        // state for parse length
+        if (state == 0 && CTXGetsz(ctx) >= 4) {
+            CTXRead(ctx, (char *)&il, 4);
+            id_length = ntohl(il);
+            state = 1;
+        }
+        // state for parse message
+        if (state == 1 && CTXGetsz(ctx) >= id_length) {
+            id = (char *)calloc(1, id_length + 1);
+            CTXRead(ctx, id, id_length);
+            state = 2;
+        }
+        if (state == 2 && CTXGetsz(ctx) >= 4) {
+            CTXRead(ctx, (char *)&kl, 4);
+            pubkey_length = ntohl(kl);
+            state = 3;
+        }
+        if (state == 3 && CTXGetsz(ctx) >= pubkey_length) {
+            pubkey = (char *)calloc(1, pubkey_length + 1);
+            CTXRead(ctx, pubkey, pubkey_length);
+            state = 4;
+        }
+        if (state == 4 && CTXGetsz(ctx) >= 4) {
+            CTXRead(ctx, (char *)&cn, 4);
+            connected_nodes = ntohl(cn);
+            state = 5;
+        }
+        if (state == 5 && CTXGetsz(ctx) >= connected_nodes * 4){
+            node_ips = (uint32_t *)calloc(1, connected_nodes * 4);
+            for (unsigned int i = 0; i < connected_nodes; i++) {
+                unsigned int temp;
+                CTXRead(ctx, (char *)&temp, 4);
+                node_ips[i] = ntohl(temp);
+            }
+            // Release unused buffer
+            CTXDiscard(ctx);
+            SetReady();
+            ctx->aux = NULL;
+            return;
+        }
+        ctx->aux = this;
+
+    }
+
+    Img::Img(string url) : Packet(IMG) {
+        url_length = url.size();
+        url = strdup(url.c_str());
+    }
+
+    pair<char *, size_t> Img::Serialize() {
+        PacketBuilder builder;
+        builder << (uint8_t) IMG
+                << htonl(url_length)
+                << string(url, url_length);
+        return builder.Finalize();
+   }
+
+    void Img::ContinueBuild(ReadCTX *ctx) {
+        int l;
+        // state for parse length
+        if (state == 0 && CTXGetsz(ctx) >= 4) {
+            CTXRead(ctx, (char *)&l, 4);
+            url_length = ntohl(l);
+            state = 1;
+        }
+        // state for parse message
+        if (state == 1 && CTXGetsz(ctx) >= url_length) {
+            url = (char *)calloc(1, url_length + 1);
+            CTXRead(ctx, url, url_length);
+            // Release unused buffer
+            CTXDiscard(ctx);
+            SetReady();
+            ctx->aux = NULL;
+            return;
+        }
+        ctx->aux = this;
+    }
+
+    string Img::GetUrl(void) {
+        return string(url, url_length);
+    }
+
+    Img::~Img(void) {
+        if (url) free(url);
     }
 }

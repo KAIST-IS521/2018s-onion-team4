@@ -12,6 +12,13 @@
 #define IMG 2
 
 using namespace std;
+
+namespace Socket {
+  int ConnectTo(int port, string ip);
+  int ConnectTo(int port, uint32_t ip);
+  uint32_t GetIPaddr(int fd);
+}
+
 namespace Packet {
     class Packet
     {
@@ -65,6 +72,21 @@ namespace Packet {
             Msg(int t) : Packet(MSG, t) { };
             Msg(string msg);
             ~Msg(void);
+    };
+
+    class Img : public Packet
+    {
+        private:
+            int state = 0;
+            uint32_t url_length;
+            char *url = NULL;
+        public:
+            pair<char *, size_t> Serialize(void);
+            string GetUrl(void);
+            void ContinueBuild(ReadCTX *ctx);
+            Img(int t) : Packet(IMG, t) {};
+            Img(string url);
+            ~Img();
     };
 
     Packet *Unserialize(ReadCTX *ctx);
