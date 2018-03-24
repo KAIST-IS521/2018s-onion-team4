@@ -82,10 +82,10 @@ namespace Packet {
             char *url = NULL;
         public:
             pair<char *, size_t> Serialize(void);
-            char *GetUrl(void);
-            int GetUrlLength(void);
+            string GetUrl(void);
             void ContinueBuild(ReadCTX *ctx);
-            Img() : Packet(IMG) {};
+            Img(int t) : Packet(IMG, t) {};
+            Img(string url);
             ~Img();
     };
 

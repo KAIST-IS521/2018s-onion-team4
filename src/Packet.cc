@@ -252,7 +252,7 @@ namespace Packet {
             state = 5;
         }
         if (state == 5 && CTXGetsz(ctx) >= connected_nodes * 4){
-            node_ips = (char *)calloc(1, connected_nodes * 4);
+            node_ips = (uint32_t *)calloc(1, connected_nodes * 4);
             for (unsigned int i = 0; i < connected_nodes; i++) {
                 unsigned int temp;
                 CTXRead(ctx, (char *)&temp, 4);
@@ -260,7 +260,7 @@ namespace Packet {
             }
             // Release unused buffer
             CTXDiscard(ctx);
-            setReady();
+            SetReady();
             ctx->aux = NULL;
             return;
         }
@@ -268,10 +268,15 @@ namespace Packet {
 
     }
 
+    Img::Img(string url) : Packet(IMG) {
+        url_length = url.size();
+        url = strdup(url.c_str());
+    }
+
     pair<char *, size_t> Img::Serialize() {
         PacketBuilder builder;
         builder << (uint8_t) IMG
-                << htonl(url_length);
+                << htonl(url_length)
                 << string(url, url_length);
         return builder.Finalize();
    }
@@ -286,23 +291,19 @@ namespace Packet {
         }
         // state for parse message
         if (state == 1 && CTXGetsz(ctx) >= url_length) {
-            url = (char *)calloc(1, length + 1);
+            url = (char *)calloc(1, url_length + 1);
             CTXRead(ctx, url, url_length);
             // Release unused buffer
             CTXDiscard(ctx);
-            setReady();
+            SetReady();
             ctx->aux = NULL;
             return;
         }
         ctx->aux = this;
     }
 
-    char *Img::GetUrl(void) {
-        return url;
-    }
-
-    int Img::GetUrlLength(void) {
-        return url_length;
+    string Img::GetUrl(void) {
+        return string(url, url_length);
     }
 
     Img::~Img(void) {
