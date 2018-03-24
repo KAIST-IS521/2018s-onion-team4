@@ -1,6 +1,6 @@
 #include "OnionMessenger.hh"
-#include "Socket.hh"
 #include "ui/tui.hh"
+#include "ui/cui.hh"
 #include <algorithm>
 #include <string>
 
@@ -30,7 +30,7 @@ namespace OnionMessenger {
                 case MSG:
                     MessageHandler::handleMsg(aux, packet);
                     break;
-                //case IMG:
+                case IMG:
                 // TODO
                 default:
                     ret = 0;
@@ -175,9 +175,9 @@ namespace OnionMessenger {
         cout << " Done." << endl;
 
         if (usetui) {
-           provider = new TUI::TUIProvider();
+            provider = new TUI::TUIProvider();
         } else {
-            // provider = new CUI::CUIProvider();
+            provider = new CUI::CUIProvider();
         }
         ID = LoginUser();
         InitServer();
