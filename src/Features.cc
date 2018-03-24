@@ -64,7 +64,7 @@ namespace Features {
         string temp;
         string filepath = "/tmp/";
         temp = ptr;
-        filepath.append(temp).append("jpg");
+        filepath.append(temp).append(".jpg");
         ofstream file(filepath);
 
         if (file.is_open() && download(url, &file)) {
