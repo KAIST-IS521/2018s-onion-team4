@@ -25,7 +25,7 @@ namespace Features {
         ofstream *file = static_cast<ofstream *>(userdata);
         if (file->is_open()) {
             file->write((const char *)ptr, size * nmemb);
-            return size *nmemb;
+            return size * nmemb;
         }
         return 0;
     }
@@ -57,7 +57,7 @@ namespace Features {
         return true;
     }
 
-    void Downloadimage(string id, string url) {
+    void DisplayAArt(string url) {
         char fname[15] = "out_XXXXXX\0";
         char *ptr;
         ptr = mktemp(fname);
