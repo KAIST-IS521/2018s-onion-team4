@@ -9,3 +9,4 @@ go get github.com/zyxar/image2ascii
 if [ $NODE ];
   then ./OnionMessenger --priv $PRIV --pub $PUB --node $NODE
   else ./OnionMessenger --priv $PRIV --pub $PUB
+fi
