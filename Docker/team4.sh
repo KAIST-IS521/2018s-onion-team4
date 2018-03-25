@@ -6,4 +6,6 @@ cd 2018s-onion-team4
 make
 mkdir /bin/go
 go get github.com/zyxar/image2ascii
-./OnionMessenger --priv $PRIV --pub $PUB --node $NODE
+if [ $NODE ];
+  then ./OnionMessenger --priv $PRIV --pub $PUB --node $NODE
+  else ./OnionMessenger --priv $PRIV --pub $PUB
