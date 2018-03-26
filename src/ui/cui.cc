@@ -16,7 +16,7 @@ namespace CUIHelper {
 		do {
 			cout << "Enter the Github Id:";
 			getline(cin, input_id);
-		} while (input_id.empty() || input_id.length()) > MAX_ID_LEN);
+		} while (input_id.empty() || input_id.length() > MAX_ID_LEN);
 
 		return input_id;
 	}
