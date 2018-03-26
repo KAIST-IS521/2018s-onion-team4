@@ -3,6 +3,7 @@
 
 #define MAX_ID_LEN 30
 #include <iostream>
+#include <mutex>
 #include "UIProvider.hh"
 
 using namespace std;
@@ -11,6 +12,8 @@ namespace CUI
 {
     class CUIProvider : public UI::UIProvider
     {
+		private:
+			mutex lock;
         public:
             pair<string, string> GetUserInfo(string uid, string info, char *msg);
             void UserInputLoop(string uid, string keyid,
