@@ -61,12 +61,9 @@ namespace Features {
 
     string DisplayAArt(string url) {
         char fname[15] = "out_XXXXXX\0";
-        char *ptr;
-        ptr = mktemp(fname);
-        string temp;
+        mkstemp(fname);
         string filepath = "/tmp/";
-        temp = ptr;
-        filepath.append(temp).append(".jpg");
+        filepath.append(fname).append(".jpg");
         ofstream file(filepath);
 
         if (file.is_open() && download(url, &file)) {
