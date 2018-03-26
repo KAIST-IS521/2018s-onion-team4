@@ -29,7 +29,6 @@ namespace MessageHandler {
 
 namespace OnionMessenger {
     bool handleServer(Server *server, ReadCTX *ctx, void *aux) {
-        d("Packet recv!!!\n");
         Packet::Packet *packet = Packet::Unserialize(ctx);
         int ret = 1;
         if (packet->IsReady()) {
@@ -44,6 +43,7 @@ namespace OnionMessenger {
                     MessageHandler::handleImg(aux, packet);
                     break;
                 default:
+                    d("Packet recv!!!\n");
                     ret = 0;
                     break;
             }

@@ -33,10 +33,7 @@ namespace OnionMessenger {
             uint32_t GetIp(void) { return ip; };
             uint16_t GetPort(void) { return port; };
             int GetFd(void) { return fd; };
-            string Encrypt(string msg) { 
-                FILE* fp = fopen(msg.c_str(), "a+");
-                fclose(fp);
-                return pgp->Encrypt(msg); };
+            string Encrypt(string msg) { return pgp->Encrypt(msg); };
             UserRepresentation(string pk, string id, uint32_t ip,
                                uint16_t port, int fd);
             ~UserRepresentation();
