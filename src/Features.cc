@@ -4,8 +4,10 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <curl/curl.h>
+#include <string>
 #include <spawn.h>
 #include <unistd.h>
+using namespace std;
 
 namespace Features {
     string Asciiart(const char *filepath);
@@ -72,11 +74,24 @@ namespace Features {
         }
     }
     string Asciiart(const char *filepath) {
-        const char *path = "/bin/go/bin/image2ascii" ;
-        const char *argv[] = {"image2ascii", "-h", "60", filepath, NULL};
-        execute(path, (char* const*)argv);
-        // Done
-        // verification is requiredi
-        return "NOT IMPLEMENTED";
+        string path = "/bin/go/bin/goasciiart " ;
+        string result= "";
+        path.append(filepath).append(" -w 80");
+        char buf[1024];
+        FILE *fp=NULL;
+        fp=popen((char*)path.c_str(),"r");
+        if(NULL==fp)
+        {
+          //error
+        }
+        while(fgets(buf,BUF_SIZE,fp)){
+            result.append(buf);
+        }
+        result.append(buf);
+        pclose(fp);
+
+
+
+        return result;
     }
 }
