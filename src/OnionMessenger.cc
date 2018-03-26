@@ -29,6 +29,7 @@ namespace MessageHandler {
 
 namespace OnionMessenger {
     bool handleServer(Server *server, ReadCTX *ctx, void *aux) {
+        d("Packet recv!!!\n");
         Packet::Packet *packet = Packet::Unserialize(ctx);
         int ret = 1;
         if (packet->IsReady()) {

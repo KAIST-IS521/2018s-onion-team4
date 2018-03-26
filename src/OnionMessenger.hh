@@ -17,8 +17,9 @@
 #define PORT 1234
 #endif
 
-
 using namespace std;
+void dbg(string s);
+
 namespace OnionMessenger {
     class UserRepresentation {
         private:

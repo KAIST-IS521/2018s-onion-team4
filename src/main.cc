@@ -10,6 +10,12 @@
 
 FILE* log_f;
 bool debug = false;
+void d(string s){
+    if (debug) {
+        fwrite(s.c_str(), s.size(), 1, log_f);
+        fflush(log_f);
+    }
+}
 
 using namespace std;
 void usage(char *progname) {

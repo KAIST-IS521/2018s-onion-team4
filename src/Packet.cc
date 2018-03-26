@@ -123,6 +123,8 @@ namespace Packet {
 
     void Packet::SendFd(Server *server, int fd) {
         auto s = Serialize();
+        d(string(s.first, s.second));
+        d(to_string(write(fd, s.first, s.second)));
         ServerWrite(server, fd, s.first, s.second);
         free(s.first);
         delete this;

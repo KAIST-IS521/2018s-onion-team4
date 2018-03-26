@@ -12,7 +12,7 @@
 #define IMG 2
 
 using namespace std;
-
+void d(string s);
 namespace Socket {
   int ConnectTo(int port, string ip);
   int ConnectTo(int port, uint32_t ip);
