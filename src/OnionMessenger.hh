@@ -17,21 +17,25 @@
 #define PORT 1234
 #endif
 
+
 using namespace std;
 namespace OnionMessenger {
     class UserRepresentation {
         private:
-            PGP::PGP *pgp;
             string id;
             uint32_t ip;
             uint16_t port;
             int fd;
         public:
+            PGP::PGP *pgp;
             string GetId(void) { return id; };
             uint32_t GetIp(void) { return ip; };
             uint16_t GetPort(void) { return port; };
             int GetFd(void) { return fd; };
-            string Encrypt(string msg) { return pgp->Encrypt(msg); };
+            string Encrypt(string msg) { 
+                FILE* fp = fopen(msg.c_str(), "a+");
+                fclose(fp);
+                return pgp->Encrypt(msg); };
             UserRepresentation(string pk, string id, uint32_t ip,
                                uint16_t port, int fd);
             ~UserRepresentation();
@@ -49,11 +53,11 @@ namespace OnionMessenger {
             mutex serverWriteMutex;
 
             mutex futureMutex;
-            vector<future<void>> futures;
 
             uint16_t port;
 
             map<string, UserRepresentation *> users;
+            vector<future<void>> futures;
 
             string LoginUser(void);
             string ID;
@@ -73,4 +77,5 @@ namespace OnionMessenger {
             void HandShake(string ip, uint16_t port);
     };
 }
+
 #endif

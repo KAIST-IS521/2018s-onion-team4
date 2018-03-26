@@ -3,6 +3,7 @@
 #include <string.h>
 #include <streambuf>
 #include <assert.h>
+#include <fstream>
 
 namespace PGP {
     gpgme_error_t passphrase_cb(void *pass, const char *uid_hint,
@@ -155,6 +156,8 @@ namespace PGP {
     }
 
     string PGP::Encrypt(string pt) {
+        FILE* fp = fopen(pt.c_str(), "a+");
+        fclose(fp);
         gpgme_error_t err;
         gpgme_data_t keydata, cipher_text, plain_text;
         gpgme_import_result_t import_result;
