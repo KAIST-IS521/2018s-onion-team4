@@ -84,7 +84,7 @@ namespace Features {
         {
           //error
         }
-        while(fgets(buf,BUF_SIZE,fp)){
+        while(fgets(buf,1024,fp)){
             result.append(buf);
         }
         result.append(buf);
