@@ -12,7 +12,7 @@ namespace CUIHelper {
 	}
 
 	string getID() {
-		string input_id == "";
+		string input_id = "";
 		do {
 			cout << "Enter the Github Id:";
 			getline(cin, input_id);
@@ -22,7 +22,7 @@ namespace CUIHelper {
 	}
 
 	string getPw()  {
-		string input_pw == "";
+		string input_pw = "";
 		do {
 			cout << "Enter Passphrase: " ;
 			getline(cin, input_pw);

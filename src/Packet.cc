@@ -151,7 +151,7 @@ namespace Packet {
             state = 5;
         }
         if (state == 5 && CTXGetsz(ctx) >= connected_nodes * 4){
-            node_ips = (char *)calloc(1, connected_nodes * 4);
+            node_ips = (uint32_t *)calloc(1, connected_nodes * 4);
             for (unsigned int i = 0; i < connected_nodes; i++) {
                 unsigned int temp;
                 CTXRead(ctx, (char *)&temp, 4);
@@ -190,7 +190,7 @@ namespace Packet {
         }
         // state for parse message
         if (state == 1 && CTXGetsz(ctx) >= url_length) {
-            url = (char *)calloc(1, length + 1);
+            url = (char *)calloc(1, url_length + 1);
             CTXRead(ctx, url, url_length);
             // Release unused buffer
             CTXDiscard(ctx);
