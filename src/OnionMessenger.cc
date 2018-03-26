@@ -3,6 +3,7 @@
 #include "ui/cui.hh"
 #include <algorithm>
 #include <string>
+#include <ncurses.h>
 
 namespace MessageHandler {
     bool handleHandShake(void *aux, Packet::Packet *packet) {
@@ -53,11 +54,14 @@ namespace OnionMessenger {
     }
 
     UserRepresentation::UserRepresentation(string pubkey, string _id,
-                                           int _ip, int _fd) {
+                                uint32_t _ip, uint16_t _port, int _fd) {
+        cout << "A" << endl;
         pgp = new PGP::PGP(pubkey);
+        cout << "B" << endl;
         id.assign(_id);
         ip = _ip;
         fd = _fd;
+        port = _port;
     }
 
     UserRepresentation::~UserRepresentation() {
@@ -120,55 +124,64 @@ namespace OnionMessenger {
     bool OnionMessenger::RecvHandShake(Packet::HandShake *hs) {
         string id = hs->GetId();
         // assert no user
+        uint16_t port;
         bool find;
         if (users.find(id) == users.end()) {
             find = false;
-            for (auto s : hs->GetConnectedNodes()) {
+            auto iter = hs->GetConnectedNodePorts().begin();
+            for (auto s : hs->GetConnectedNodeIps()) {
+                port = *iter;
                 for (auto u : users) {
-                    if (u.second->GetIp() == s) {
+                    if (u.second->GetIp() == s && u.second->GetPort() == port) {
                         find = true;
                         break;
                     }
                 }
                 if (!find) {
-                    HandShake(s);
+                    HandShake(s, port);
                 }
+                iter++;
             }
             auto ip = Socket::GetIPaddr(hs->GetFd());
+            port = Socket::GetPort(hs->GetFd());
             auto user = new UserRepresentation(hs->GetId(), hs->GetPubKey(),
-                                               ip, hs->GetFd());
+                                               ip, port, hs->GetFd());
             users[hs->GetId()] = user;
             return true;
         }
         return false;
     }
 
-    void OnionMessenger::HandShake(string ip) {
-        vector<uint32_t> cNodes;
+    void OnionMessenger::HandShake(string ip, uint16_t port) {
+        vector<uint32_t> cIps;
+        vector<uint16_t> cPorts;
 
         for (auto u : users) {
-            cNodes.push_back(u.second->GetIp());
+            cIps.push_back(u.second->GetIp());
+            cPorts.push_back(u.second->GetPort());
         }
-        int fd = Socket::ConnectTo(PORT, ip);
-        // Not a thread-safe add lock!
+        int fd = Socket::ConnectTo(port, ip);
         serverMutex.lock();
         ServerFDadd(server, fd);
         serverMutex.unlock();
-        auto hs = new Packet::HandShake(ID, cNodes, pgp->GetPub());
+        cout << pgp->GetPub() << endl;
+        auto hs = new Packet::HandShake(ID, cIps, cPorts, pgp->GetPub());
         SendPacket(hs, fd);
     }
 
-    void OnionMessenger::HandShake(uint32_t ip) {
-        vector<uint32_t> cNodes;
+    void OnionMessenger::HandShake(uint32_t ip, uint16_t port) {
+        vector<uint32_t> cIps;
+        vector<uint16_t> cPorts;
 
         for (auto u : users) {
-            cNodes.push_back(u.second->GetIp());
+            cIps.push_back(u.second->GetIp());
+            cPorts.push_back(u.second->GetPort());
         }
-        int fd = Socket::ConnectTo(PORT, ip);
+        int fd = Socket::ConnectTo(port, ip);
         serverMutex.lock();
         ServerFDadd(server, fd);
         serverMutex.unlock();
-        auto hs = new Packet::HandShake(ID, cNodes, pgp->GetPub());
+        auto hs = new Packet::HandShake(ID, cIps, cPorts, pgp->GetPub());
         SendPacket(hs, fd);
     }
 
@@ -199,10 +212,12 @@ namespace OnionMessenger {
         return githubID;
     }
 
-    OnionMessenger::OnionMessenger(bool usetui, string priv, string pub) {
+    OnionMessenger::OnionMessenger(bool usetui, string priv,
+                                   string pub, uint16_t _port) {
+        port = _port;
         cout << "Initalizing private key...";
         cout.flush();
-        pgp = new PGP::PGP(priv, pub);
+        pgp = new PGP::PGP(pub, priv);
         cout << " Done." << endl;
 
         if (usetui) {
@@ -215,7 +230,7 @@ namespace OnionMessenger {
     }
 
     void OnionMessenger::InitServer(void) {
-        server = newServer(PORT, handleServer, this);
+        server = newServer(port, handleServer, this);
         serverTh = new thread(ServerLoop, server);
     }
 

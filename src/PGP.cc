@@ -80,7 +80,6 @@ namespace PGP {
     // This only provide enc
     PGP::PGP(string pubkey) {
         InitPubkey(pubkey);
-        get_passphrase_info();
     }
 
     void PGP::setUid(string uid) {

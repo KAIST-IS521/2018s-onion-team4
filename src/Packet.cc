@@ -1,5 +1,6 @@
 #include <arpa/inet.h>
 #include <cstring>
+#include <iostream>
 #include <time.h>
 #include <fcntl.h>
 #include <string>
@@ -46,6 +47,15 @@ namespace Socket {
 
     return ntohl(temp_addr.sin_addr.s_addr);
   }
+
+  uint16_t GetPort(int fd) {
+    struct sockaddr_in temp_addr;
+    socklen_t len = sizeof(struct sockaddr_in);
+
+    getpeername(fd, (struct sockaddr *)&temp_addr, &len);
+
+    return ntohs(temp_addr.sin_port);
+  }
 }
 
 namespace Packet {
@@ -91,9 +101,10 @@ namespace Packet {
 
     Packet* Unserialize(ReadCTX *ctx) {
         Packet *packet;
-        int type;
+        char type;
         if (!ctx->aux) {
             CTXRead(ctx, (char *)&type, 1);
+            cout << type << endl;
             if (type == HANDSHAKE) {
                 packet = new HandShake(ctx->fd);
             } else if(type == MSG) {
@@ -157,15 +168,17 @@ namespace Packet {
         length = msg.size();
     }
 
-    HandShake::HandShake(string _id, vector<uint32_t> cNodes,
-            string pk) : Packet(HANDSHAKE) {
+    HandShake::HandShake(string _id, vector<uint32_t> cIps,
+            vector<uint16_t>cPorts, string pk) : Packet(HANDSHAKE) {
             id = strdup(_id.c_str());
             id_length = _id.size();
             pubkey = strdup(pk.c_str());
             pubkey_length = pk.size();
-            connected_nodes = cNodes.size();
+            connected_nodes = cIps.size();
             node_ips = (uint32_t *)calloc(sizeof(uint32_t), connected_nodes);
-            std::copy(cNodes.begin(), cNodes.end(), node_ips);
+            node_ports = (uint16_t *)calloc(sizeof(uint16_t), connected_nodes);
+            std::copy(cIps.begin(), cIps.end(), node_ips);
+            std::copy(cPorts.begin(), cPorts.end(), node_ports);
     }
 
     HandShake::~HandShake(void) {
@@ -185,6 +198,7 @@ namespace Packet {
 
         for (unsigned int i = 0; i < connected_nodes; i++) {
             builder << htonl(node_ips[i]);
+            builder << htons(node_ports[i]);
         }
         return builder.Finalize();
     }
@@ -197,32 +211,15 @@ namespace Packet {
         return string(pubkey, pubkey_length);
     }
 
-    vector<uint32_t> HandShake::GetConnectedNodes(void) {
+    vector<uint32_t> HandShake::GetConnectedNodeIps(void) {
         return vector<uint32_t>(node_ips, node_ips + connected_nodes);
     }
 
+    vector<uint16_t> HandShake::GetConnectedNodePorts(void) {
+        return vector<uint16_t>(node_ports, node_ports + connected_nodes);
+    }
+
     void HandShake::ContinueBuild(ReadCTX *ctx) {
-        // TODO: Fill me
-        /*
-        HandShake* hs = new HandShake();
-
-        hs->id_length = ntohl(*(uint32_t *) (recv + 1));
-        hs->id = (char *) calloc(1, sizeof(hs->id_length));
-        memcpy(hs->id, recv + 5, hs->id_length);
-
-        hs->pubkey_length = ntohl(*(uint32_t *) (recv + 5 + hs->id_length));
-        hs->pubkey = (char *) calloc(1, sizeof(hs->pubkey_length));
-        memcpy(hs->pubkey, recv + 9 + hs->id_length, hs->pubkey_length);
-
-        hs->connected_nodes = ntohl(*(uint32_t *) (recv + 9 + hs->id_length +
-                    hs->pubkey_length));
-        hs->node_ips = (uint32_t *) calloc(hs->connected_nodes, sizeof(uint32_t));
-        for(unsigned int i = 0; i < hs->connected_nodes; i++){
-            uint32_t temp = ntohl(*(uint32_t *)
-                    (recv + 13 + 4 * i + hs->id_length + hs->pubkey_length));
-            hs->node_ips[i] = temp;
-        }
-        */
         unsigned int il, kl, cn;
         // state for parse length
         if (state == 0 && CTXGetsz(ctx) >= 4) {
@@ -251,12 +248,17 @@ namespace Packet {
             connected_nodes = ntohl(cn);
             state = 5;
         }
-        if (state == 5 && CTXGetsz(ctx) >= connected_nodes * 4){
-            node_ips = (uint32_t *)calloc(1, connected_nodes * 4);
+        if (state == 5 && CTXGetsz(ctx) >= connected_nodes *
+                                        (sizeof(uint16_t) + sizeof(uint32_t))) {
+            node_ips = (uint32_t *)calloc(sizeof(uint32_t), connected_nodes);
+            node_ports = (uint16_t *)calloc(sizeof(uint16_t), connected_nodes);
             for (unsigned int i = 0; i < connected_nodes; i++) {
-                unsigned int temp;
-                CTXRead(ctx, (char *)&temp, 4);
-                node_ips[i] = ntohl(temp);
+                uint32_t temp32;
+                uint16_t temp16;
+                CTXRead(ctx, (char *)&temp32, 4);
+                CTXRead(ctx, (char *)&temp16, 2);
+                node_ips[i] = ntohl(temp32);
+                node_ports[i] = ntohs(temp16);
             }
             // Release unused buffer
             CTXDiscard(ctx);

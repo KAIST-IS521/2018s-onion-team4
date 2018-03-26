@@ -17,6 +17,7 @@ namespace Socket {
   int ConnectTo(int port, string ip);
   int ConnectTo(int port, uint32_t ip);
   uint32_t GetIPaddr(int fd);
+  uint16_t GetPort(int fd);
 }
 
 namespace Packet {
@@ -39,6 +40,7 @@ namespace Packet {
             void SendFd(Server *server, int fd);
     };
 
+
     class HandShake : public Packet
     {
         private:
@@ -47,15 +49,18 @@ namespace Packet {
             char *id = NULL;
             char *pubkey = NULL;
             uint32_t* node_ips = NULL;
+            uint16_t* node_ports = NULL;
         public:
             pair<char *, size_t> Serialize(void);
             string GetId(void);
             string GetPubKey(void);
-            vector<uint32_t> GetConnectedNodes(void);
+            vector<uint32_t> GetConnectedNodeIps(void);
+            vector<uint16_t> GetConnectedNodePorts(void);
             void ContinueBuild(ReadCTX *ctx);
 
             HandShake(int t) : Packet(HANDSHAKE, t) { };
-            HandShake(string id, vector<uint32_t> cNodes, string pubkey);
+            HandShake(string id, vector<uint32_t> cIps,
+                      vector<uint16_t> cPorts, string pubkey);
             ~HandShake(void);
     };
 

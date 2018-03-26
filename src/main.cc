@@ -14,7 +14,8 @@ void usage(char *progname) {
          << endl
          << "Required arguments" << endl
          << "  --priv, -s : Private key file" << endl
-         << "  --pub,  -p : Public key file" << endl
+         << "  --pub,  -b : Public key file" << endl
+         << "  --port, -p : Server listen port" << endl
          << endl
          << "Optional arguments" << endl
          << "  --notui    : Not use TUI" << endl
@@ -30,27 +31,42 @@ int main(int argc, char **argv) {
     string priv;
     string pub;
     int c;
+    uint16_t nport;
+    uint16_t port;
+    size_t token;
     static struct option long_options[] =
     {
         {"notui", no_argument, &useTUI, 0},
         {"node",  required_argument, 0, 'n'},
         {"priv",  required_argument, 0, 's'},
-        {"pub",   required_argument, 0, 'p'},
+        {"pub",   required_argument, 0, 'b'},
+        {"port",  required_argument, 0, 'p'},
         {"help",  no_argument, 0, 'h'},
         {0, 0, 0, 0}
     };
-    while (-1 != (c = getopt_long(argc, argv, "n:s:p:h", long_options, NULL))) {
+    while (-1 != (c = getopt_long(argc, argv, "n:s:b:p:h",
+                                  long_options, NULL))) {
         switch (c) {
             case 0:
                 break;
             case 'n':
                 node = optarg;
+                token = node.find(":");
+                if (token != string::npos) {
+                    nport = (uint16_t)stoi(node.substr(token+1));
+                    node = node.substr(0, token);
+                } else {
+                    nport = 1234;
+                }
                 break;
             case 's':
                 priv = optarg;
                 break;
-            case 'p':
+            case 'b':
                 pub = optarg;
+                break;
+            case 'p':
+                port = atoi(optarg);
                 break;
             case 'h':
             case '?':
@@ -61,12 +77,17 @@ int main(int argc, char **argv) {
     ifstream privkey(priv);
     ifstream pubkey(pub);
 
-    if (priv.empty() || pub.empty()) {
+    if (!port) {
+        cerr << argv[0] << " : port argument is not supplied." << endl;
+        exit(1);
+    } else if (priv.empty() || pub.empty()) {
         usage(argv[0]);
     } else if (!privkey.is_open()) {
-        cerr << argv[0] << ": " << priv << " : No such file.";
+        cerr << argv[0] << ": " << priv << " : No such file." << endl;
+        exit(1);
     } else if (!pubkey.is_open()) {
-        cerr << argv[0] << ": " << priv << " : No such file.";
+        cerr << argv[0] << ": " << priv << " : No such file." << endl;
+        exit(1);
     }
     string privData((std::istreambuf_iterator<char>(privkey)),
                      std::istreambuf_iterator<char>());
@@ -75,9 +96,9 @@ int main(int argc, char **argv) {
     PGP::initGPG();
 
     auto onion =
-        new OnionMessenger::OnionMessenger(useTUI, privData, pubData);
+        new OnionMessenger::OnionMessenger(useTUI, privData, pubData, port);
     if (!node.empty()) {
-        onion->HandShake(node);
+        onion->HandShake(node, nport);
     }
     onion->Loop();
 }
