@@ -55,9 +55,7 @@ namespace OnionMessenger {
 
     UserRepresentation::UserRepresentation(string pubkey, string _id,
                                 uint32_t _ip, uint16_t _port, int _fd) {
-        cout << "A" << endl;
         pgp = new PGP::PGP(pubkey);
-        cout << "B" << endl;
         id.assign(_id);
         ip = _ip;
         fd = _fd;
@@ -70,7 +68,7 @@ namespace OnionMessenger {
 
     void OnionMessenger::RecvMsgAsync(Packet::Msg *msg) {
         string ct = msg->GetMessage();
-        auto future = async([this, &ct] ()
+        auto future = async(launch::async, [this, &ct] ()
                 { provider->PushMessage(pgp->Decrypt(ct)); });
         futureMutex.lock();
         futures.push_back(move(future));
@@ -79,7 +77,7 @@ namespace OnionMessenger {
 
     void OnionMessenger::RecvImageAsync(Packet::Img *img) {
         string ct = img->GetUrl();
-        auto future = async([this, &ct] ()
+        auto future = async(launch::async, [this, &ct] ()
                 { auto img = Features::DisplayAArt(pgp->Decrypt(ct));
                   provider->PushMessage(img); });
         futureMutex.lock();
@@ -96,7 +94,7 @@ namespace OnionMessenger {
     bool OnionMessenger::SendMsgAsync(string msg, string user) {
         if (users.find(user) != users.end()) {
             auto rep = users[user];
-            auto future = async([this, rep, &msg] ()
+            auto future = async(launch::async, [this, rep, &msg] ()
                     { auto packet = new Packet::Msg(rep->Encrypt(msg));
                       SendPacket(packet, rep->GetFd()); });
             futureMutex.lock();
@@ -110,7 +108,7 @@ namespace OnionMessenger {
     bool OnionMessenger::SendImageAsync(string img, string user) {
         if (users.find(user) != users.end()) {
             auto rep = users[user];
-            auto future = async([this, rep, &img] ()
+            auto future = async(launch::async, [this, rep, &img] ()
                     { auto packet = new Packet::Img(rep->Encrypt(img));
                       SendPacket(packet, rep->GetFd()); });
             futureMutex.lock();
@@ -144,6 +142,18 @@ namespace OnionMessenger {
             }
             auto ip = Socket::GetIPaddr(hs->GetFd());
             port = Socket::GetPort(hs->GetFd());
+
+            // XXX: send my handshake packet to user;
+            vector<uint32_t> cIps;
+            vector<uint16_t> cPorts;
+
+            for (auto u : users) {
+                cIps.push_back(u.second->GetIp());
+                cPorts.push_back(u.second->GetPort());
+            }
+            auto nhs = new Packet::HandShake(ID, cIps, cPorts, pgp->GetPub());
+            SendPacket(nhs, hs->GetFd());
+            provider->PushMessage("[*] New user: " + hs->GetId());
             auto user = new UserRepresentation(hs->GetId(), hs->GetPubKey(),
                                                ip, port, hs->GetFd());
             users[hs->GetId()] = user;
@@ -164,7 +174,6 @@ namespace OnionMessenger {
         serverMutex.lock();
         ServerFDadd(server, fd);
         serverMutex.unlock();
-        cout << pgp->GetPub() << endl;
         auto hs = new Packet::HandShake(ID, cIps, cPorts, pgp->GetPub());
         SendPacket(hs, fd);
     }
