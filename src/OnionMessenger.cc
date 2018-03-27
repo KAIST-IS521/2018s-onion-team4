@@ -71,17 +71,10 @@ namespace OnionMessenger {
 
     void OnionMessenger::RecvMsgAsync(Packet::Msg *msg) {
         string ct = msg->GetMessage();
-        provider->PushMessage("Here :" + ct);
         thread([this, ct](){
-            provider->PushMessage(pgp->Decrypt(ct)); });
-        /*
-        auto future = async(launch::async, [this, &ct] ()
-                { provider->PushMessage(pgp->Decrypt(ct)); });
-        futureMutex.lock();
-        futures.push_back(move(future));
-        futureMutex.unlock();
-        */
+            provider->PushMessage(pgp->Decrypt(ct)); }).detach();
     }
+
     void OnionMessenger::RecvImageAsync(Packet::Img *img) {
         string ct = img->GetUrl();
         auto future = async(launch::async, [this, &ct] ()
@@ -174,7 +167,7 @@ namespace OnionMessenger {
             users[hs->GetId()] = user;
             return true;
         }
-        return false;
+        return true;
     }
 
     void OnionMessenger::HandShake(string ip, uint16_t port) {
