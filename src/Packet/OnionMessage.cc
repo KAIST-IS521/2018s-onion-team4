@@ -1,5 +1,6 @@
 #include "OnionMessage.hh"
 #include "PacketBuilder.hh"
+#include <ncurses.h>
 #include <cstring>
 
 namespace Message {
@@ -57,10 +58,10 @@ namespace Message {
     MsgBody *Unserialize(string data) {
         uint8_t ty = data.c_str()[0];
         uint32_t length;
-        memcpy(&length, data.substr(1, 5).c_str(), 4);
+        memcpy(&length, data.substr(1, 4).c_str(), 4);
         length = ntohl(length);
-        string id = data.substr(6, 6+length);
-        string left = data.substr(7+length);
+        string id = data.substr(5, length);
+        string left = data.substr(6+length);
 
         switch (ty) {
             case ONIONLAYER:

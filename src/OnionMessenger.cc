@@ -65,8 +65,6 @@ namespace OnionMessenger {
                     }
                 }
                 if (!find) {
-                    endwin();
-                    cout << *ip << " " << *port << endl;
                     HandShake(*ip, *port);
                 }
             }
@@ -94,7 +92,29 @@ namespace OnionMessenger {
 
     void OnionMessenger::Relay(Message::OnionLayer *msg) {
         string user = msg->GetNextDst();
-        if (users.find(user) != users.end()) {
+        provider->PushMessage("-> " + user);
+        if (user == ID) {
+            endwin();
+            cout << "!!!" << msg->GetData() << endl;
+            cout << "!!!" << pgp->Decrypt(msg->GetData()) << endl;
+            exit(0);
+            auto data = Message::Unserialize(pgp->Decrypt(msg->GetData()));
+            switch (data->GetType()) {
+                case Message::ONIONLAYER:
+                    Relay(static_cast<Message::OnionLayer *>(data));
+                    break;
+                case Message::MSGLAYER:
+                    HandleMessage(static_cast<Message::MsgLayer *>(data));
+                    break;
+                case Message::IMGLAYER:
+                    HandleAArt(static_cast<Message::ImgLayer *>(data));
+                    break;
+                default:
+                    // XXX: NOTREACHABLE
+                    exit(0);
+                    break;
+            }
+        } else if (users.find(user) != users.end()) {
             auto rep = users[user];
             auto pkt = new Packet::Msg(msg->GetData());
             SendPacket(pkt, rep->GetFd());
@@ -149,15 +169,15 @@ namespace OnionMessenger {
                 auto item = users.begin();
                 advance(item, rand() % users.size());
                 User::Rep *nrep = (*item).second;
-                User::Rep *tmp;
+                provider->PushMessage(nrep->GetId());
+                provider->PushMessage("->");
                 for(int i = 0; i < rand() % 10; i++) {
                     layer = layer->AddLayer(nrep);
-                    do {
-                        auto item = users.begin();
-                        advance(item, rand() % users.size());
-                        tmp = (*item).second;
-                    } while(!tmp->GetId().compare(nrep->GetId()));
-                    nrep = tmp;
+                    auto item = users.begin();
+                    advance(item, rand() % users.size());
+                    nrep = (*item).second;
+                    provider->PushMessage(nrep->GetId());
+                    provider->PushMessage("->");
                 }
                 auto ser = layer->Serialize(nrep);
                 SendPacket(new Packet::Msg(ser), nrep->GetFd());
