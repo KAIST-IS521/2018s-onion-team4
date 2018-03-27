@@ -1,13 +1,18 @@
 #include "OnionMessenger.hh"
-#include "ui/tui.hh"
-#include "ui/cui.hh"
+#include "Ui/tui.hh"
+#include "Ui/cui.hh"
 #include <algorithm>
 #include <string>
 #include <ncurses.h>
 #include <unistd.h>
-
+#include "Packet/Socket.hh"
 
 namespace MessageHandler {
+    void handleCLI(char *in, void *aux) {
+        auto messenger = static_cast<OnionMessenger::OnionMessenger *>(aux);
+        messenger->HandleCommand(in);
+    }
+
     bool handleHandShake(void *aux, Packet::Packet *packet) {
         auto messenger = static_cast<OnionMessenger::OnionMessenger *>(aux);
         auto handshake = static_cast<Packet::HandShake *>(packet);
@@ -20,120 +25,28 @@ namespace MessageHandler {
         messenger->RecvMsgAsync(msg);
     }
 
-    void handleImg(void *aux, Packet::Packet *packet) {
-        auto messenger = static_cast<OnionMessenger::OnionMessenger *>(aux);
-        auto img = static_cast<Packet::Img *>(packet);
-        messenger->RecvImageAsync(img);
-    }
-}
-
-namespace OnionMessenger {
     bool handleServer(Server *server, ReadCTX *ctx, void *aux) {
         Packet::Packet *packet = Packet::Unserialize(ctx);
         int ret = 1;
         if (packet->IsReady()) {
             switch (packet->GetType()) {
                 case HANDSHAKE:
-                    ret = MessageHandler::handleHandShake(aux, packet);
+                    ret = handleHandShake(aux, packet);
                     break;
                 case MSG:
-                    MessageHandler::handleMsg(aux, packet);
-                    break;
-                case IMG:
-                    MessageHandler::handleImg(aux, packet);
+                    handleMsg(aux, packet);
                     break;
                 default:
-                    d("Packet recv!!!\n");
                     ret = 0;
                     break;
             }
         }
         return ret;
     };
+}
 
-    void handleCLI(char *in, void *aux) {
-        auto messenger = static_cast<OnionMessenger *>(aux);
-        messenger->HandleCommand(in);
-    }
-
-    UserRepresentation::UserRepresentation(string pubkey, string _id,
-                                uint32_t _ip, uint16_t _port, int _fd) {
-        pgp = new PGP::PGP(pubkey);
-        id.assign(_id);
-        ip = _ip;
-        fd = _fd;
-        port = _port;
-    }
-
-    UserRepresentation::~UserRepresentation() {
-        delete pgp;
-    }
-
-    void OnionMessenger::RecvMsgAsync(Packet::Msg *msg) {
-        string ct = msg->GetMessage();
-        provider->PushMessage("Here :" + ct);
-        thread([this, ct](){
-            provider->PushMessage(pgp->Decrypt(ct)); });
-        /*
-        auto future = async(launch::async, [this, &ct] ()
-                { provider->PushMessage(pgp->Decrypt(ct)); });
-        futureMutex.lock();
-        futures.push_back(move(future));
-        futureMutex.unlock();
-        */
-    }
-    void OnionMessenger::RecvImageAsync(Packet::Img *img) {
-        string ct = img->GetUrl();
-        auto future = async(launch::async, [this, &ct] ()
-                { auto img = Features::DisplayAArt(pgp->Decrypt(ct));
-                  provider->PushMessage(img); });
-        futureMutex.lock();
-        futures.push_back(move(future));
-        futureMutex.unlock();
-    }
-
-    void OnionMessenger::SendPacket(Packet::Packet *packet, int fd) {
-        serverMutex.lock();
-        packet->SendFd(server, fd);
-        serverMutex.unlock();
-    }
-    bool OnionMessenger::SendMsgAsync(string msg, string user) {
-        if (users.find(user) != users.end()) {
-            auto rep = users[user];
-            thread([this, rep, msg](){
-                string s = rep->Encrypt(msg);
-                auto packet = new Packet::Msg(s);
-                SendPacket(packet, rep->GetFd());
-                }).detach();
-            /*
-            auto future = async(launch::async, [this, rep, &msg] ()
-                    { auto packet = new Packet::Msg(rep->Encrypt(msg));
-                      SendPacket(packet, rep->GetFd()); });
-            provider->PushMessage("[*] Future Count : ");
-            futureMutex.lock();
-            futures.push_back(move(future));
-            futureMutex.unlock();
-            */
-            //sleep(10);
-            return true;
-        }
-        return false;
-    }
-
-    bool OnionMessenger::SendImageAsync(string img, string user) {
-        if (users.find(user) != users.end()) {
-            auto rep = users[user];
-            auto future = async(launch::async, [this, rep, &img] ()
-                    { auto packet = new Packet::Img(rep->Encrypt(img));
-                      SendPacket(packet, rep->GetFd()); });
-            futureMutex.lock();
-            futures.push_back(move(future));
-            futureMutex.unlock();
-            return true;
-        }
-        return false;
-    }
-
+namespace OnionMessenger {
+    // XXX:Reciever side logic
     bool OnionMessenger::RecvHandShake(Packet::HandShake *hs) {
         string id = hs->GetId();
         // assert no user
@@ -165,18 +78,115 @@ namespace OnionMessenger {
             for (auto u : users) {
                 cIps.push_back(u.second->GetIp());
                 cPorts.push_back(u.second->GetPort());
+                    endwin();
+                    cout << u.second->GetIp() << " " << u.second->GetPort() << endl;
+
             }
             auto nhs = new Packet::HandShake(ID, cIps, cPorts, pgp->GetPub());
             SendPacket(nhs, hs->GetFd());
             provider->PushMessage("[*] New user: " + hs->GetId());
-            auto user = new UserRepresentation(hs->GetPubKey(), hs->GetId(),
+            auto user = new User::Rep(hs->GetPubKey(), hs->GetId(),
                                                ip, port, hs->GetFd());
             users[hs->GetId()] = user;
+            return true;
+        }
+        return true;
+    }
+
+    void OnionMessenger::Relay(Message::OnionLayer *msg) {
+        string user = msg->GetNextDst();
+        if (users.find(user) != users.end()) {
+            auto rep = users[user];
+            auto pkt = new Packet::Msg(msg->GetData());
+            SendPacket(pkt, rep->GetFd());
+        }
+        delete msg;
+    }
+
+    void OnionMessenger::HandleMessage(Message::MsgLayer *msg) {
+        auto sender = msg->GetSender();
+        auto text = msg->GetData();
+        // TODO: ADD provider->PushChat(user, text);
+        provider->PushMessage(text);
+        delete msg;
+    }
+
+    void OnionMessenger::HandleAArt(Message::ImgLayer *msg) {
+        auto sender = msg->GetSender();
+        auto url = msg->GetUrl();
+        provider->PushMessage(Features::DisplayAArt(url));
+        delete msg;
+    }
+
+    void OnionMessenger::RecvMsgAsync(Packet::Msg *msg) {
+        string ct = msg->GetCT();
+        thread([this, ct](){
+                auto msg = Message::Unserialize(pgp->Decrypt(ct));
+                if (msg) {
+                    switch (msg->GetType()) {
+                        case Message::ONIONLAYER:
+                            Relay(static_cast<Message::OnionLayer *>(msg));
+                            break;
+                        case Message::MSGLAYER:
+                            HandleMessage(static_cast<Message::MsgLayer *>(msg));
+                            break;
+                        case Message::IMGLAYER:
+                            HandleAArt(static_cast<Message::ImgLayer *>(msg));
+                            break;
+                        default:
+                            // XXX: NOTREACHABLE
+                            exit(0);
+                            break;
+                        }
+                    }
+            }).detach();
+    }
+
+    // XXX: Sender side logic
+    void OnionMessenger::DoOnionRouting(Message::MsgBody *bd, User::Rep *rep) {
+        thread([this, rep, bd]() {
+                Message::OnionLayer *layer = bd->AddLayer(rep);
+                // XXX: Should we need to append ourself into routing pool?
+                auto item = users.begin();
+                advance(item, rand() % users.size());
+                User::Rep *nrep = (*item).second;
+                User::Rep *tmp;
+                for(int i = 0; i < rand() % 10; i++) {
+                    layer = layer->AddLayer(nrep);
+                    do {
+                        auto item = users.begin();
+                        advance(item, rand() % users.size());
+                        tmp = (*item).second;
+                    } while(!tmp->GetId().compare(nrep->GetId()));
+                    nrep = tmp;
+                }
+                auto ser = layer->Serialize(nrep);
+                SendPacket(new Packet::Msg(ser), nrep->GetFd());
+                delete layer; // XXX: Last layer is not serialized
+                }).detach();
+    }
+
+    bool OnionMessenger::SendMsgAsync(string msg, string user) {
+        if (users.find(user) != users.end()) {
+            auto rep = users[user];
+            auto layer = new Message::MsgLayer(ID, msg);
+            DoOnionRouting(layer, rep);
             return true;
         }
         return false;
     }
 
+    bool OnionMessenger::SendImgAsync(string url, string user) {
+        if (users.find(user) != users.end()) {
+            auto rep = users[user];
+            auto layer = new Message::ImgLayer(ID, url);
+            DoOnionRouting(layer, rep);
+            return true;
+        }
+        return false;
+    }
+
+    // XXX: Helper
     void OnionMessenger::HandShake(string ip, uint16_t port) {
         vector<uint32_t> cIps;
         vector<uint16_t> cPorts;
@@ -209,53 +219,10 @@ namespace OnionMessenger {
         SendPacket(hs, fd);
     }
 
-    void OnionMessenger::CleanFuture(void) {
-        futureMutex.lock();
-        auto filt =
-            [](const future<void>& f)
-            { return f.wait_for(chrono::seconds(0)) == future_status::ready; };
-        futures.erase(remove_if(futures.begin(), futures.end(), filt));
-        futureMutex.unlock();
-    }
-
-    string OnionMessenger::LoginUser(void) {
-        int idx = 1;
-        char msg[30] = {0, };
-        string githubID;
-        string pass;
-        do {
-            if (idx > 3) {
-                exit(0);
-            }
-            pair<string, string> info =
-                provider->GetUserInfo(pgp->getUid(), pgp->getPassInfo(), msg);
-            githubID = info.first;
-            pass = info.second;
-            sprintf(msg, "Bad passphrase (try %d of 3)", idx++);
-        } while (!pgp->Verify_Pass(pass.c_str()));
-        return githubID;
-    }
-
-    OnionMessenger::OnionMessenger(bool usetui, string priv,
-                                   string pub, uint16_t _port) {
-        port = _port;
-        cout << "Initalizing private key...";
-        cout.flush();
-        pgp = new PGP::PGP(pub, priv);
-        cout << " Done." << endl;
-
-        if (usetui) {
-            provider = new TUI::TUIProvider();
-        } else {
-            provider = new CUI::CUIProvider();
-        }
-        ID = LoginUser();
-        InitServer();
-    }
-
-    void OnionMessenger::InitServer(void) {
-        server = newServer(port, handleServer, this);
-        serverTh = new thread(ServerLoop, server);
+    void OnionMessenger::SendPacket(Packet::Packet *packet, int fd) {
+        serverMutex.lock();
+        packet->SendFd(server, fd);
+        serverMutex.unlock();
     }
 
     void OnionMessenger::HandleCommand(char *msg) {
@@ -276,16 +243,60 @@ namespace OnionMessenger {
 
         if (!cmd.compare("/msg")) {
             SendMsgAsync(input, id);
+            // Push sended message to client side
         } else if(!cmd.compare("/image")) {
-            SendImageAsync(input, id);
+            SendImgAsync(input, id);
+            // Push sended message to client side
         } else {
             auto err = ("Unknown Command: " + string(msg));
             provider->PushMessage((char *)err.c_str());
         }
     }
 
+    // XXX: Init
+    string OnionMessenger::LoginUser(void) {
+        int idx = 1;
+        char msg[30] = {0, };
+        string githubID;
+        string pass;
+        do {
+            if (idx > 3) {
+                exit(0);
+            }
+            pair<string, string> info =
+                provider->GetUserInfo(pgp->getUid(), pgp->getPassInfo(), msg);
+            githubID = info.first;
+            pass = info.second;
+            sprintf(msg, "Bad passphrase (try %d of 3)", idx++);
+        } while (!pgp->Verify_Pass(pass.c_str()));
+        return githubID;
+    }
+
+    OnionMessenger::OnionMessenger(bool usetui, string priv,
+                                   string pub, uint16_t _port) {
+        srand(time(nullptr));
+        port = _port;
+        cout << "Initalizing private key...";
+        cout.flush();
+        pgp = new PGP::PGP(pub, priv);
+        cout << " Done." << endl;
+
+        if (usetui) {
+            provider = new TUI::TUIProvider();
+        } else {
+            provider = new CUI::CUIProvider();
+        }
+        ID = LoginUser();
+        InitServer();
+    }
+
+    void OnionMessenger::InitServer(void) {
+        server = newServer(port, MessageHandler::handleServer, this);
+        serverTh = new thread(ServerLoop, server);
+    }
+
     void OnionMessenger::Loop(void) {
         provider->UserInputLoop(ID, pgp->getPassInfo().substr(0, 8),
-                                handleCLI, this);
+                                MessageHandler::handleCLI, this);
     }
 }

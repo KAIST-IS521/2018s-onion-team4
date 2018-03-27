@@ -8,37 +8,17 @@
 
 #include "SelectServer/src/server.h"
 #include "SelectServer/src/context.h"
-#include "PGP.hh"
-#include "Packet.hh"
-#include "Features.hh"
-#include "ui/UIProvider.hh"
-
-#ifndef PORT
-#define PORT 1234
-#endif
+#include "Packet/Packet.hh"
+#include "Packet/OnionMessage.hh"
+#include "Utils/Features.hh"
+#include "Utils/User.hh"
+#include "Utils/PGP.hh"
+#include "Ui/UIProvider.hh"
 
 using namespace std;
 void dbg(string s);
 
 namespace OnionMessenger {
-    class UserRepresentation {
-        private:
-            string id;
-            uint32_t ip;
-            uint16_t port;
-            int fd;
-        public:
-            PGP::PGP *pgp;
-            string GetId(void) { return id; };
-            uint32_t GetIp(void) { return ip; };
-            uint16_t GetPort(void) { return port; };
-            int GetFd(void) { return fd; };
-            string Encrypt(string msg) { return pgp->Encrypt(msg); };
-            UserRepresentation(string pk, string id, uint32_t ip,
-                               uint16_t port, int fd);
-            ~UserRepresentation();
-    };
-
     class OnionMessenger
     {
         private:
@@ -48,29 +28,27 @@ namespace OnionMessenger {
 
             thread *serverTh;
             mutex serverMutex;
-            mutex serverWriteMutex;
-
-            mutex futureMutex;
 
             uint16_t port;
 
-            map<string, UserRepresentation *> users;
-            vector<future<void>> futures;
+            map<string, User::Rep *> users;
 
             string LoginUser(void);
             string ID;
             void InitServer(void);
             void SendPacket(Packet::Packet *packet, int fd);
             bool SendMsgAsync(string msg, string user);
-            bool SendImageAsync(string url, string user);
+            bool SendImgAsync(string msg, string user);
+            void Relay(Message::OnionLayer *msg);
+            void HandleMessage(Message::MsgLayer *msg);
+            void HandleAArt(Message::ImgLayer *msg);
+            void DoOnionRouting(Message::MsgBody *bd, User::Rep *rep);
         public:
             OnionMessenger(bool usetui, string priv, string pub, uint16_t port);
             void Loop(void);
             void HandleCommand(char *msg);
             bool RecvHandShake(Packet::HandShake *hs);
             void RecvMsgAsync(Packet::Msg *msg);
-            void RecvImageAsync(Packet::Img *img);
-            void CleanFuture(void);
             void HandShake(uint32_t ip, uint16_t port);
             void HandShake(string ip, uint16_t port);
     };
