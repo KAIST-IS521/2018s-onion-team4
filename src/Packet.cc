@@ -123,6 +123,9 @@ namespace Packet {
 
     void Packet::SendFd(Server *server, int fd) {
         auto s = Serialize();
+        d(string(s.first, s.second));
+        d("FD is valid? " + to_string(fcntl(fd, F_GETFD)));
+        d("FD ? " + to_string(fd));
         ServerWrite(server, fd, s.first, s.second);
         free(s.first);
         delete this;

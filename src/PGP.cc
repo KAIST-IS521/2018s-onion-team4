@@ -3,6 +3,7 @@
 #include <string.h>
 #include <streambuf>
 #include <assert.h>
+#include <fstream>
 
 namespace PGP {
     gpgme_error_t passphrase_cb(void *pass, const char *uid_hint,

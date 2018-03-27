@@ -6,6 +6,7 @@
 #include <gpgme.h>
 #include <locale.h>
 #include <errno.h>
+#include <mutex>
 
 using namespace std;
 

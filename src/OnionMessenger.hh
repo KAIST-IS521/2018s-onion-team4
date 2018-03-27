@@ -18,15 +18,17 @@
 #endif
 
 using namespace std;
+void dbg(string s);
+
 namespace OnionMessenger {
     class UserRepresentation {
         private:
-            PGP::PGP *pgp;
             string id;
             uint32_t ip;
             uint16_t port;
             int fd;
         public:
+            PGP::PGP *pgp;
             string GetId(void) { return id; };
             uint32_t GetIp(void) { return ip; };
             uint16_t GetPort(void) { return port; };
@@ -49,11 +51,11 @@ namespace OnionMessenger {
             mutex serverWriteMutex;
 
             mutex futureMutex;
-            vector<future<void>> futures;
 
             uint16_t port;
 
             map<string, UserRepresentation *> users;
+            vector<future<void>> futures;
 
             string LoginUser(void);
             string ID;
@@ -73,4 +75,5 @@ namespace OnionMessenger {
             void HandShake(string ip, uint16_t port);
     };
 }
+
 #endif

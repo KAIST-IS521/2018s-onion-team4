@@ -4,6 +4,8 @@
 #include <algorithm>
 #include <string>
 #include <ncurses.h>
+#include <unistd.h>
+
 
 namespace MessageHandler {
     bool handleHandShake(void *aux, Packet::Packet *packet) {
@@ -41,6 +43,7 @@ namespace OnionMessenger {
                     MessageHandler::handleImg(aux, packet);
                     break;
                 default:
+                    d("Packet recv!!!\n");
                     ret = 0;
                     break;
             }
@@ -68,13 +71,17 @@ namespace OnionMessenger {
 
     void OnionMessenger::RecvMsgAsync(Packet::Msg *msg) {
         string ct = msg->GetMessage();
+        provider->PushMessage("Here :" + ct);
+        thread([this, ct](){
+            provider->PushMessage(pgp->Decrypt(ct)); });
+        /*
         auto future = async(launch::async, [this, &ct] ()
                 { provider->PushMessage(pgp->Decrypt(ct)); });
         futureMutex.lock();
         futures.push_back(move(future));
         futureMutex.unlock();
+        */
     }
-
     void OnionMessenger::RecvImageAsync(Packet::Img *img) {
         string ct = img->GetUrl();
         auto future = async(launch::async, [this, &ct] ()
@@ -90,16 +97,24 @@ namespace OnionMessenger {
         packet->SendFd(server, fd);
         serverMutex.unlock();
     }
-
     bool OnionMessenger::SendMsgAsync(string msg, string user) {
         if (users.find(user) != users.end()) {
             auto rep = users[user];
+            thread([this, rep, msg](){
+                string s = rep->Encrypt(msg);
+                auto packet = new Packet::Msg(s);
+                SendPacket(packet, rep->GetFd());
+                }).detach();
+            /*
             auto future = async(launch::async, [this, rep, &msg] ()
                     { auto packet = new Packet::Msg(rep->Encrypt(msg));
                       SendPacket(packet, rep->GetFd()); });
+            provider->PushMessage("[*] Future Count : ");
             futureMutex.lock();
             futures.push_back(move(future));
             futureMutex.unlock();
+            */
+            //sleep(10);
             return true;
         }
         return false;
@@ -154,7 +169,7 @@ namespace OnionMessenger {
             auto nhs = new Packet::HandShake(ID, cIps, cPorts, pgp->GetPub());
             SendPacket(nhs, hs->GetFd());
             provider->PushMessage("[*] New user: " + hs->GetId());
-            auto user = new UserRepresentation(hs->GetId(), hs->GetPubKey(),
+            auto user = new UserRepresentation(hs->GetPubKey(), hs->GetId(),
                                                ip, port, hs->GetFd());
             users[hs->GetId()] = user;
             return true;
