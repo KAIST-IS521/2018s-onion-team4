@@ -7,48 +7,9 @@
 #include <unistd.h>
 
 #include "Packet.hh"
+#include "PacketBuilder.hh"
 
 namespace Packet {
-    class PacketBuilder
-    {
-        private:
-            char *buf = NULL;
-            size_t size = 0;
-        public:
-            PacketBuilder& operator<<(uint32_t x) {
-                int width = sizeof(uint32_t);
-                buf = (char *)realloc(buf, size + width);
-                memcpy(buf + size, &x, width);
-                size += width;
-                return *this;
-            };
-            PacketBuilder& operator<<(int x) {
-                int width = sizeof(int);
-                buf = (char *)realloc(buf, size + width);
-                memcpy(buf + size, &x, width);
-                size += width;
-                return *this;
-            };
-            PacketBuilder& operator<<(uint8_t x) {
-                int width = sizeof(uint8_t);
-                buf = (char *)realloc(buf, size + width);
-                memcpy(buf + size, &x, width);
-                size += width;
-                return *this;
-            };
-            PacketBuilder& operator<<(string x) {
-                int width = x.size();
-                buf = (char *)realloc(buf, size + width);
-                memcpy(buf + size, x.c_str(), width);
-                size += width;
-                return *this;
-            };
-
-            pair<char *, size_t> Finalize(void) {
-                return pair<char *, size_t>(buf, size);
-            };
-    };
-
     // XXX: PACKET INTERFACE
     Packet* Unserialize(ReadCTX *ctx) {
         Packet *packet;
@@ -78,7 +39,7 @@ namespace Packet {
 
     // XXX: SECTION FOR MSG
     pair<char *, size_t> Msg::Serialize(void) {
-        PacketBuilder builder;
+        PacketBuilder::Builder builder;
         builder << (uint8_t) MSG << htonl(length) << string(ct, length);
         return builder.Finalize();
     }
@@ -138,7 +99,7 @@ namespace Packet {
     }
 
     pair<char *, size_t> HandShake::Serialize(void) {
-        PacketBuilder builder;
+        PacketBuilder::Builder builder;
         builder << (uint8_t) HANDSHAKE
                 << htonl(id_length)
                 << string(id, id_length)
