@@ -13,6 +13,7 @@ namespace PacketBuilder {
         public:
             Builder& operator<<(uint32_t x);
             Builder& operator<<(int x);
+            Builder& operator<<(uint16_t x);
             Builder& operator<<(uint8_t x);
             Builder& operator<<(string x);
             string Finalize(void);

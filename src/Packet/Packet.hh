@@ -39,21 +39,23 @@ namespace Packet {
     {
         private:
             int state = 0;
+            uint16_t port;
             uint32_t id_length, pubkey_length, connected_nodes;
             char *id = NULL;
             char *pubkey = NULL;
-            uint32_t* node_ips = NULL;
-            uint16_t* node_ports = NULL;
+            vector<uint32_t> node_ips;
+            vector<uint16_t> node_ports;
         public:
             string Serialize(void);
             string GetId(void);
             string GetPubKey(void);
+            uint16_t GetPort(void) { return port; };
             vector<uint32_t> GetConnectedNodeIps(void);
             vector<uint16_t> GetConnectedNodePorts(void);
             void ContinueBuild(ReadCTX *ctx);
 
             HandShake(int t) : Packet(HANDSHAKE, t) { };
-            HandShake(string id, vector<uint32_t> cIps,
+            HandShake(uint16_t port, string id, vector<uint32_t> cIps,
                       vector<uint16_t> cPorts, string pubkey);
             ~HandShake(void);
     };

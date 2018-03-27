@@ -16,6 +16,13 @@ namespace PacketBuilder {
         size += width;
         return *this;
     };
+    Builder& Builder::operator<<(uint16_t x) {
+        int width = sizeof(uint16_t);
+        buf = (char *)realloc(buf, size + width);
+        memcpy(buf + size, &x, width);
+        size += width;
+        return *this;
+    };
     Builder& Builder::operator<<(uint8_t x) {
         int width = sizeof(uint8_t);
         buf = (char *)realloc(buf, size + width);

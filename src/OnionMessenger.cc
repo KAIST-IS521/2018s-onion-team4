@@ -50,26 +50,26 @@ namespace OnionMessenger {
     bool OnionMessenger::RecvHandShake(Packet::HandShake *hs) {
         string id = hs->GetId();
         // assert no user
-        uint16_t port;
         bool find;
         if (users.find(id) == users.end()) {
             find = false;
-            auto iter = hs->GetConnectedNodePorts().begin();
-            for (auto s : hs->GetConnectedNodeIps()) {
-                port = *iter;
+            auto ipVec = hs->GetConnectedNodeIps();
+            auto portVec = hs->GetConnectedNodePorts();
+            auto ip = ipVec.begin();
+            auto port = portVec.begin();
+            for (;ip != ipVec.end(); ip++, port++) {
                 for (auto u : users) {
-                    if (u.second->GetIp() == s && u.second->GetPort() == port) {
+                    if (u.second->GetIp() == *ip && u.second->GetPort() == *port) {
                         find = true;
                         break;
                     }
                 }
                 if (!find) {
-                    HandShake(s, port);
+                    HandShake(*ip, *port);
                 }
-                iter++;
             }
-            auto ip = Socket::GetIPaddr(hs->GetFd());
-            port = Socket::GetPort(hs->GetFd());
+            auto tip = Socket::GetIPaddr(hs->GetFd());
+            auto tport = hs->GetPort();
 
             // XXX: send my handshake packet to user;
             vector<uint32_t> cIps;
@@ -78,15 +78,12 @@ namespace OnionMessenger {
             for (auto u : users) {
                 cIps.push_back(u.second->GetIp());
                 cPorts.push_back(u.second->GetPort());
-                    endwin();
-                    cout << u.second->GetIp() << " " << u.second->GetPort() << endl;
-
             }
-            auto nhs = new Packet::HandShake(ID, cIps, cPorts, pgp->GetPub());
+            auto nhs = new Packet::HandShake(PORT, ID, cIps, cPorts, pgp->GetPub());
             SendPacket(nhs, hs->GetFd());
             provider->PushMessage("[*] New user: " + hs->GetId());
             auto user = new User::Rep(hs->GetPubKey(), hs->GetId(),
-                                               ip, port, hs->GetFd());
+                                         tip, tport, hs->GetFd());
             users[hs->GetId()] = user;
             return true;
         }
@@ -95,7 +92,29 @@ namespace OnionMessenger {
 
     void OnionMessenger::Relay(Message::OnionLayer *msg) {
         string user = msg->GetNextDst();
-        if (users.find(user) != users.end()) {
+        provider->PushMessage("-> " + user);
+        if (user == ID) {
+            endwin();
+            cout << "!!!" << msg->GetData() << endl;
+            cout << "!!!" << pgp->Decrypt(msg->GetData()) << endl;
+            exit(0);
+            auto data = Message::Unserialize(pgp->Decrypt(msg->GetData()));
+            switch (data->GetType()) {
+                case Message::ONIONLAYER:
+                    Relay(static_cast<Message::OnionLayer *>(data));
+                    break;
+                case Message::MSGLAYER:
+                    HandleMessage(static_cast<Message::MsgLayer *>(data));
+                    break;
+                case Message::IMGLAYER:
+                    HandleAArt(static_cast<Message::ImgLayer *>(data));
+                    break;
+                default:
+                    // XXX: NOTREACHABLE
+                    exit(0);
+                    break;
+            }
+        } else if (users.find(user) != users.end()) {
             auto rep = users[user];
             auto pkt = new Packet::Msg(msg->GetData());
             SendPacket(pkt, rep->GetFd());
@@ -150,15 +169,15 @@ namespace OnionMessenger {
                 auto item = users.begin();
                 advance(item, rand() % users.size());
                 User::Rep *nrep = (*item).second;
-                User::Rep *tmp;
+                provider->PushMessage(nrep->GetId());
+                provider->PushMessage("->");
                 for(int i = 0; i < rand() % 10; i++) {
                     layer = layer->AddLayer(nrep);
-                    do {
-                        auto item = users.begin();
-                        advance(item, rand() % users.size());
-                        tmp = (*item).second;
-                    } while(!tmp->GetId().compare(nrep->GetId()));
-                    nrep = tmp;
+                    auto item = users.begin();
+                    advance(item, rand() % users.size());
+                    nrep = (*item).second;
+                    provider->PushMessage(nrep->GetId());
+                    provider->PushMessage("->");
                 }
                 auto ser = layer->Serialize(nrep);
                 SendPacket(new Packet::Msg(ser), nrep->GetFd());
@@ -199,7 +218,7 @@ namespace OnionMessenger {
         serverMutex.lock();
         ServerFDadd(server, fd);
         serverMutex.unlock();
-        auto hs = new Packet::HandShake(ID, cIps, cPorts, pgp->GetPub());
+        auto hs = new Packet::HandShake(PORT, ID, cIps, cPorts, pgp->GetPub());
         SendPacket(hs, fd);
     }
 
@@ -215,7 +234,7 @@ namespace OnionMessenger {
         serverMutex.lock();
         ServerFDadd(server, fd);
         serverMutex.unlock();
-        auto hs = new Packet::HandShake(ID, cIps, cPorts, pgp->GetPub());
+        auto hs = new Packet::HandShake(PORT, ID, cIps, cPorts, pgp->GetPub());
         SendPacket(hs, fd);
     }
 
@@ -275,7 +294,7 @@ namespace OnionMessenger {
     OnionMessenger::OnionMessenger(bool usetui, string priv,
                                    string pub, uint16_t _port) {
         srand(time(nullptr));
-        port = _port;
+        PORT = _port;
         cout << "Initalizing private key...";
         cout.flush();
         pgp = new PGP::PGP(pub, priv);
@@ -291,7 +310,7 @@ namespace OnionMessenger {
     }
 
     void OnionMessenger::InitServer(void) {
-        server = newServer(port, MessageHandler::handleServer, this);
+        server = newServer(PORT, MessageHandler::handleServer, this);
         serverTh = new thread(ServerLoop, server);
     }
 
