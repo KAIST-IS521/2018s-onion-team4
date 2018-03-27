@@ -5,50 +5,12 @@
 #include <fcntl.h>
 #include <string>
 #include <unistd.h>
+#include <ncurses.h>
 
 #include "Packet.hh"
+#include "PacketBuilder.hh"
 
 namespace Packet {
-    class PacketBuilder
-    {
-        private:
-            char *buf = NULL;
-            size_t size = 0;
-        public:
-            PacketBuilder& operator<<(uint32_t x) {
-                int width = sizeof(uint32_t);
-                buf = (char *)realloc(buf, size + width);
-                memcpy(buf + size, &x, width);
-                size += width;
-                return *this;
-            };
-            PacketBuilder& operator<<(int x) {
-                int width = sizeof(int);
-                buf = (char *)realloc(buf, size + width);
-                memcpy(buf + size, &x, width);
-                size += width;
-                return *this;
-            };
-            PacketBuilder& operator<<(uint8_t x) {
-                int width = sizeof(uint8_t);
-                buf = (char *)realloc(buf, size + width);
-                memcpy(buf + size, &x, width);
-                size += width;
-                return *this;
-            };
-            PacketBuilder& operator<<(string x) {
-                int width = x.size();
-                buf = (char *)realloc(buf, size + width);
-                memcpy(buf + size, x.c_str(), width);
-                size += width;
-                return *this;
-            };
-
-            pair<char *, size_t> Finalize(void) {
-                return pair<char *, size_t>(buf, size);
-            };
-    };
-
     // XXX: PACKET INTERFACE
     Packet* Unserialize(ReadCTX *ctx) {
         Packet *packet;
@@ -71,14 +33,13 @@ namespace Packet {
 
     void Packet::SendFd(Server *server, int fd) {
         auto s = Serialize();
-        ServerWrite(server, fd, s.first, s.second);
-        free(s.first);
+        ServerWrite(server, fd, (char *)s.c_str(), s.size());
         delete this;
     }
 
     // XXX: SECTION FOR MSG
-    pair<char *, size_t> Msg::Serialize(void) {
-        PacketBuilder builder;
+    string Msg::Serialize(void) {
+        PacketBuilder::Builder builder;
         builder << (uint8_t) MSG << htonl(length) << string(ct, length);
         return builder.Finalize();
     }
@@ -118,37 +79,39 @@ namespace Packet {
     }
 
     // XXX: SECTION FOR HANDSHAKE
-    HandShake::HandShake(string _id, vector<uint32_t> cIps,
+    HandShake::HandShake(uint16_t _port, string _id, vector<uint32_t> cIps,
             vector<uint16_t>cPorts, string pk) : Packet(HANDSHAKE) {
+            port = _port;
             id = strdup(_id.c_str());
             id_length = _id.size();
             pubkey = strdup(pk.c_str());
             pubkey_length = pk.size();
             connected_nodes = cIps.size();
-            node_ips = (uint32_t *)calloc(sizeof(uint32_t), connected_nodes);
-            node_ports = (uint16_t *)calloc(sizeof(uint16_t), connected_nodes);
-            std::copy(cIps.begin(), cIps.end(), node_ips);
-            std::copy(cPorts.begin(), cPorts.end(), node_ports);
+            node_ips = cIps;
+            node_ports = cPorts;
     }
 
     HandShake::~HandShake(void) {
         if (id) free(id);
         if (pubkey) free(pubkey);
-        if (node_ips) free(node_ips);
     }
 
-    pair<char *, size_t> HandShake::Serialize(void) {
-        PacketBuilder builder;
+    string HandShake::Serialize(void) {
+        PacketBuilder::Builder builder;
         builder << (uint8_t) HANDSHAKE
+                << htons(port)
                 << htonl(id_length)
                 << string(id, id_length)
                 << htonl(pubkey_length)
                 << string(pubkey, pubkey_length)
                 << htonl(connected_nodes);
 
+        auto iterIp = node_ips.begin();
+        auto iterPort = node_ports.begin();
         for (unsigned int i = 0; i < connected_nodes; i++) {
-            builder << htonl(node_ips[i]);
-            builder << htons(node_ports[i]);
+            builder << htonl(*iterIp);
+            builder << htons(*iterPort);
+            iterIp++; iterPort++;
         }
         return builder.Finalize();
     }
@@ -162,53 +125,59 @@ namespace Packet {
     }
 
     vector<uint32_t> HandShake::GetConnectedNodeIps(void) {
-        return vector<uint32_t>(node_ips, node_ips + connected_nodes);
+        return node_ips;
     }
 
     vector<uint16_t> HandShake::GetConnectedNodePorts(void) {
-        return vector<uint16_t>(node_ports, node_ports + connected_nodes);
+        return node_ports;
     }
 
     void HandShake::ContinueBuild(ReadCTX *ctx) {
         unsigned int il, kl, cn;
+        uint16_t p;
         // state for parse length
-        if (state == 0 && CTXGetsz(ctx) >= 4) {
-            CTXRead(ctx, (char *)&il, 4);
-            id_length = ntohl(il);
+        if (state == 0 && CTXGetsz(ctx) >= 2) {
+            CTXRead(ctx, (char *)&p, 2);
+            port = ntohs(p);
             state = 1;
         }
-        // state for parse message
-        if (state == 1 && CTXGetsz(ctx) >= id_length) {
-            id = (char *)calloc(1, id_length + 1);
-            CTXRead(ctx, id, id_length);
+
+        if (state == 1 && CTXGetsz(ctx) >= 4) {
+            CTXRead(ctx, (char *)&il, 4);
+            id_length = ntohl(il);
             state = 2;
         }
-        if (state == 2 && CTXGetsz(ctx) >= 4) {
-            CTXRead(ctx, (char *)&kl, 4);
-            pubkey_length = ntohl(kl);
+        // state for parse message
+        if (state == 2 && CTXGetsz(ctx) >= id_length) {
+            id = (char *)calloc(1, id_length + 1);
+            CTXRead(ctx, id, id_length);
             state = 3;
         }
-        if (state == 3 && CTXGetsz(ctx) >= pubkey_length) {
-            pubkey = (char *)calloc(1, pubkey_length + 1);
-            CTXRead(ctx, pubkey, pubkey_length);
+        if (state == 3 && CTXGetsz(ctx) >= 4) {
+            CTXRead(ctx, (char *)&kl, 4);
+            pubkey_length = ntohl(kl);
             state = 4;
         }
-        if (state == 4 && CTXGetsz(ctx) >= 4) {
-            CTXRead(ctx, (char *)&cn, 4);
-            connected_nodes = ntohl(cn);
+        if (state == 4 && CTXGetsz(ctx) >= pubkey_length) {
+            pubkey = (char *)calloc(1, pubkey_length + 1);
+            CTXRead(ctx, pubkey, pubkey_length);
             state = 5;
         }
-        if (state == 5 && CTXGetsz(ctx) >= connected_nodes *
+        if (state == 5 && CTXGetsz(ctx) >= 4) {
+            CTXRead(ctx, (char *)&cn, 4);
+            connected_nodes = ntohl(cn);
+            state = 6;
+        }
+        if (state == 6 && CTXGetsz(ctx) >= connected_nodes *
                                         (sizeof(uint16_t) + sizeof(uint32_t))) {
-            node_ips = (uint32_t *)calloc(sizeof(uint32_t), connected_nodes);
-            node_ports = (uint16_t *)calloc(sizeof(uint16_t), connected_nodes);
             for (unsigned int i = 0; i < connected_nodes; i++) {
                 uint32_t temp32;
                 uint16_t temp16;
                 CTXRead(ctx, (char *)&temp32, 4);
                 CTXRead(ctx, (char *)&temp16, 2);
-                node_ips[i] = ntohl(temp32);
-                node_ports[i] = ntohs(temp16);
+                node_ips.push_back(ntohl(temp32));
+                node_ports.push_back(ntohs(temp16));
+                endwin();
             }
             // Release unused buffer
             CTXDiscard(ctx);
