@@ -22,7 +22,7 @@ Command line
 -----
 - Send msg
 `/send [Github_ID] [msg]`
-- Geturl to asciiart
+- Geturl to asciiart(png file)
 `/image [Github_ID] [url]`
 
 Architecture
