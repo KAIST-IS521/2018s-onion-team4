@@ -7,8 +7,6 @@ Onion messenger is the messenger service that inspired by onion routing.
 
 It use PGP for encrypt or decrypt messages.
 
-Our system use 1234 port to listen a packet, which means you cannot run two messenger at the same time.
-
 Also, our messenger provides ascii art feature! You can send your favorite picture to other guy.
 
 Build & Run
@@ -29,9 +27,9 @@ Architecture
 -----
 - Thread #1: handle UI.
 - Thread #2: handle packet in, out.
-- "std::async" used for Enc & Dec.
+- "std::thread" used for Enc & Dec.
 - Distribute System -> No main server.
-- No onion routing -> Because we are distributed system!
+- Onion routing: Safe from sniffing.
 
 Protocol
 -----
@@ -43,10 +41,12 @@ PubkeyLength(uint32_t) | Pubkey(PubkeyLength)| # of connected node(uint32_t)
 | (# of connected node) entries of Node IP(uint32_t) |`
 
 ##### Msg
-`| 1(uint8_t) | Length(uint32_t) | Data(Length) |`
+`| 1(uint8_t) | Length(uint32_t) | ENC of MsgBody(Length) |`
 
-##### Image
-`|2(uint8_t) | Length(uint32_t) | Data(Length) |`
+##### MsgBody
+OnionLayer: `| 0 (uint8_t) | idLength(uint32_t) | id (idLength) | Data |`
+Message   : `| 1 (uint8_t) | Data |`
+Image     : `| 2 (uint8_t) | Url |`
 
 Team Member & Role
 -----
