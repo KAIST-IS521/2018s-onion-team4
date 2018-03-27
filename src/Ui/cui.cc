@@ -8,7 +8,8 @@ namespace CUIHelper {
 		cout << "Please enter the Github ID and user information to unlock" << endl;
 		cout << "the OpenPGP secret key for user:" << endl;
 		cout << "\"" << uid << "\", " << infos << endl;
-		cout << msg << endl;
+		if(msg)
+			cout << msg << endl;
 	}
 
 	string getID() {
@@ -57,6 +58,14 @@ namespace CUI {
 
     void CUIProvider::UserInputLoop(string uid, string keyid,
             void (*handler)(char *, void *), void *aux) {
+		while (true) {
+			string input;
+			string prompt = uid + " @ [" + keyid + "]: ";
+			cout << prompt;
+			getline(cin, input);
+			if(input)
+				handler(input.c_str(), aux);
+		}
     }
 
     void CUIProvider::PushMessage(char *msg) {
