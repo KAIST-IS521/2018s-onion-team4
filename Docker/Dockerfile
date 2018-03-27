@@ -8,7 +8,15 @@ RUN DIST=xenial && \
     apt-get install -y --no-install-recommends --no-install-suggests \
     make git libgpgme11-dev libncurses-dev g++ libcurl4-openssl-dev \
     alsa-utils
+RUN apt-get install -y ca-certificates
+RUN apt-get install -y golang-go
+RUN apt-get install -y apt-utils
+ADD team4.sh /root/team4.sh
 RUN rm -rf /var/lib/apt/lists/* && \
     apt-get clean
+
+
 WORKDIR /root
-CMD ["/bin/bash"]
+ENV GOPATH /bin/go
+ENV PATH $PATH:$GOPATH/bin
+CMD ["/root/team4.sh"]

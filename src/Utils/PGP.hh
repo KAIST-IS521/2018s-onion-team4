@@ -6,6 +6,7 @@
 #include <gpgme.h>
 #include <locale.h>
 #include <errno.h>
+#include <mutex>
 
 using namespace std;
 
@@ -40,6 +41,7 @@ namespace PGP {
             PGP(string pubkey);
             string Encrypt(string pt);
             string Decrypt(string ct);
+            string GetPub(void) { return pubArmored; };
             bool Verify_Pass(const char *pass);
             void setUid(string uid);
             string getUid(void);

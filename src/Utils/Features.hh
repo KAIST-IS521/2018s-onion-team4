@@ -5,7 +5,6 @@
 using namespace std;
 
 namespace Features {
-    void Downloadmusic(string urls);
-    void Downloadimage(string urls);
+    string DisplayAArt(string url);
 }
 #endif

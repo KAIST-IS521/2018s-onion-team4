@@ -8,7 +8,9 @@ TARGET=OnionMessenger
 
 SRC=$(wildcard $(SRC_DIR)/*.cc)
 SRC+=$(wildcard $(SRC_DIR)/SelectServer/src/*.c)
-SRC+=$(wildcard $(SRC_DIR)/ui/*.cc)
+SRC+=$(wildcard $(SRC_DIR)/Ui/*.cc)
+SRC+=$(wildcard $(SRC_DIR)/Packet/*.cc)
+SRC+=$(wildcard $(SRC_DIR)/Utils/*.cc)
 
 all: clean module $(BUILD_DIR)/$(TARGET)
 module:
