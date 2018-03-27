@@ -45,7 +45,9 @@ PubkeyLength(uint32_t) | Pubkey(PubkeyLength)| # of connected node(uint32_t)
 
 ##### MsgBody
 OnionLayer: `| 0 (uint8_t) | idLength(uint32_t) | id (idLength) | Data |`
+
 Message   : `| 1 (uint8_t) | Data |`
+
 Image     : `| 2 (uint8_t) | Url |`
 
 Team Member & Role
