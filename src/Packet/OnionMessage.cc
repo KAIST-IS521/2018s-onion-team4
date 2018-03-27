@@ -3,7 +3,7 @@
 #include <cstring>
 
 namespace Message {
-    MsgBody *MsgBody::AddLayer(User::Rep *rep) {
+    OnionLayer *MsgBody::AddLayer(User::Rep *rep) {
         auto msg = new OnionLayer(rep->GetId(), Serialize(rep));
         delete this;
         return msg;
@@ -40,7 +40,6 @@ namespace Message {
     }
 
     // XXX: Section for ImgLayer
-
     string ImgLayer::Serialize(User::Rep *rep) {
         PacketBuilder::Builder builder;
         builder << (uint8_t)MSGLAYER

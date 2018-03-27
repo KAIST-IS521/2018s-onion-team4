@@ -6,15 +6,17 @@
 
 using namespace std;
 
-namespace message {
+namespace Message {
     typedef enum {ONIONLAYER=0, MSGLAYER=1, IMGLAYER=2} msgType;
+    class OnionLayer;
 
     class MsgBody
     {
         private:
             msgType ty;
         public:
-            MsgBody *AddLayer(User::Rep *rep);
+            msgType GetType(void) { return ty; }
+            OnionLayer *AddLayer(User::Rep *rep);
             virtual string Serialize(User::Rep *rep) = 0;
             MsgBody(msgType t) : ty(t) { };
             virtual ~MsgBody(void) { };
@@ -26,6 +28,8 @@ namespace message {
             string id;
             string data;
         public:
+            string GetNextDst(void) { return id; };
+            string GetData(void) { return data; };
             string Serialize(User::Rep *rep);
             OnionLayer(string id, string body);
             ~OnionLayer(void) { };
@@ -37,6 +41,8 @@ namespace message {
             string sender;
             string data;
         public:
+            string GetSender(void) { return sender; };
+            string GetData(void) { return data; };
             string Serialize(User::Rep *rep);
             MsgLayer(string sender, string msg);
             ~MsgLayer(void) { };
@@ -48,6 +54,8 @@ namespace message {
             string sender;
             string url;
         public:
+            string GetSender(void) { return sender; };
+            string GetUrl(void) { return url; };
             string Serialize(User::Rep *rep);
             ImgLayer(string sender, string url);
             ~ImgLayer(void) { };
