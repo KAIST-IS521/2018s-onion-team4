@@ -25,7 +25,7 @@ namespace Packet {
             Packet(int t, int fd) : ready(false), type(t), fd(fd) { };
             Packet(int t) : ready(false), type(t) { };
             virtual ~Packet(void) { };
-            virtual pair<char *, size_t> Serialize(void) = 0;
+            virtual string Serialize(void) = 0;
             virtual void ContinueBuild(ReadCTX *ctx) = 0;
             int GetType(void) { return type; };
             int GetFd(void) { return fd; };
@@ -45,7 +45,7 @@ namespace Packet {
             uint32_t* node_ips = NULL;
             uint16_t* node_ports = NULL;
         public:
-            pair<char *, size_t> Serialize(void);
+            string Serialize(void);
             string GetId(void);
             string GetPubKey(void);
             vector<uint32_t> GetConnectedNodeIps(void);
@@ -65,7 +65,7 @@ namespace Packet {
             uint32_t length;
             char *ct = NULL;
         public:
-            pair<char *, size_t> Serialize(void);
+            string Serialize(void);
             string GetCT(void);
             void ContinueBuild(ReadCTX *ctx);
             Msg(int t) : Packet(MSG, t) { };

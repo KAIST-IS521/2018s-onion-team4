@@ -28,9 +28,6 @@ namespace OnionMessenger {
 
             thread *serverTh;
             mutex serverMutex;
-            mutex serverWriteMutex;
-
-            mutex futureMutex;
 
             uint16_t port;
 

@@ -16,7 +16,7 @@ namespace Message {
                 << htonl(id.size())
                 << id
                 << data;
-        return rep->Encrypt(builder.ToString());
+        return rep->Encrypt(builder.Finalize());
     }
 
     OnionLayer::OnionLayer(string _id, string _body) : MsgBody(ONIONLAYER) {
@@ -31,7 +31,7 @@ namespace Message {
                 << htonl(sender.size())
                 << sender
                 << data;
-        return rep->Encrypt(builder.ToString());
+        return rep->Encrypt(builder.Finalize());
     }
 
     MsgLayer::MsgLayer(string _sender, string msg) : MsgBody(MSGLAYER) {
@@ -46,7 +46,7 @@ namespace Message {
                 << htonl(sender.size())
                 << sender
                 << url;
-        return rep->Encrypt(builder.ToString());
+        return rep->Encrypt(builder.Finalize());
     }
 
     ImgLayer::ImgLayer(string _sender, string url) : MsgBody(IMGLAYER) {

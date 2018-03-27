@@ -78,6 +78,9 @@ namespace OnionMessenger {
             for (auto u : users) {
                 cIps.push_back(u.second->GetIp());
                 cPorts.push_back(u.second->GetPort());
+                    endwin();
+                    cout << u.second->GetIp() << " " << u.second->GetPort() << endl;
+
             }
             auto nhs = new Packet::HandShake(ID, cIps, cPorts, pgp->GetPub());
             SendPacket(nhs, hs->GetFd());
@@ -143,11 +146,19 @@ namespace OnionMessenger {
     void OnionMessenger::DoOnionRouting(Message::MsgBody *bd, User::Rep *rep) {
         thread([this, rep, bd]() {
                 Message::OnionLayer *layer = bd->AddLayer(rep);
-                User::Rep *nrep; // SELECT HERE
-                for(int i = 0; i < 10; i++) {
-                    // XXX: Randomly select nrep with out continued element,
-                    // XXX: layer = layer->AddLayer(rep);
-                    // XXX: nrep = newly selected someone;
+                // XXX: Should we need to append ourself into routing pool?
+                auto item = users.begin();
+                advance(item, rand() % users.size());
+                User::Rep *nrep = (*item).second;
+                User::Rep *tmp;
+                for(int i = 0; i < rand() % 10; i++) {
+                    layer = layer->AddLayer(nrep);
+                    do {
+                        auto item = users.begin();
+                        advance(item, rand() % users.size());
+                        tmp = (*item).second;
+                    } while(!tmp->GetId().compare(nrep->GetId()));
+                    nrep = tmp;
                 }
                 auto ser = layer->Serialize(nrep);
                 SendPacket(new Packet::Msg(ser), nrep->GetFd());
@@ -263,6 +274,7 @@ namespace OnionMessenger {
 
     OnionMessenger::OnionMessenger(bool usetui, string priv,
                                    string pub, uint16_t _port) {
+        srand(time(nullptr));
         port = _port;
         cout << "Initalizing private key...";
         cout.flush();

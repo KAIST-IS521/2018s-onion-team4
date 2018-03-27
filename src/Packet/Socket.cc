@@ -43,6 +43,7 @@ namespace Socket {
     return ntohl(temp_addr.sin_addr.s_addr);
   }
 
+  // SHOULD CHANGE!
   uint16_t GetPort(int fd) {
     struct sockaddr_in temp_addr;
     socklen_t len = sizeof(struct sockaddr_in);

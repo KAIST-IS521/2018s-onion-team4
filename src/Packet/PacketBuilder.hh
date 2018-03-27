@@ -15,8 +15,7 @@ namespace PacketBuilder {
             Builder& operator<<(int x);
             Builder& operator<<(uint8_t x);
             Builder& operator<<(string x);
-            pair<char *, size_t> Finalize(void);
-            string ToString(void);
+            string Finalize(void);
             ~Builder(void);
     };
 }

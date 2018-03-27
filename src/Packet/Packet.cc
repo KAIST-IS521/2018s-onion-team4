@@ -32,13 +32,12 @@ namespace Packet {
 
     void Packet::SendFd(Server *server, int fd) {
         auto s = Serialize();
-        ServerWrite(server, fd, s.first, s.second);
-        free(s.first);
+        ServerWrite(server, fd, (char *)s.c_str(), s.size());
         delete this;
     }
 
     // XXX: SECTION FOR MSG
-    pair<char *, size_t> Msg::Serialize(void) {
+    string Msg::Serialize(void) {
         PacketBuilder::Builder builder;
         builder << (uint8_t) MSG << htonl(length) << string(ct, length);
         return builder.Finalize();
@@ -98,7 +97,7 @@ namespace Packet {
         if (node_ips) free(node_ips);
     }
 
-    pair<char *, size_t> HandShake::Serialize(void) {
+    string HandShake::Serialize(void) {
         PacketBuilder::Builder builder;
         builder << (uint8_t) HANDSHAKE
                 << htonl(id_length)
@@ -170,6 +169,7 @@ namespace Packet {
                 CTXRead(ctx, (char *)&temp16, 2);
                 node_ips[i] = ntohl(temp32);
                 node_ports[i] = ntohs(temp16);
+                printf("%d\n", ntohs(temp16));
             }
             // Release unused buffer
             CTXDiscard(ctx);

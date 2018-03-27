@@ -30,12 +30,9 @@ namespace PacketBuilder {
         size += width;
         return *this;
     };
-    pair<char *, size_t> Builder::Finalize(void) {
-        return pair<char *, size_t>(buf, size);
-    };
-    string Builder::ToString(void) {
+    string Builder::Finalize(void) {
         return string(buf, size);
-    }
+    };
     Builder::~Builder(void) {
         if (buf) free(buf);
     }
