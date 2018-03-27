@@ -189,5 +189,6 @@ namespace PGP {
         size_t size;
         char* result = gpgme_data_release_and_get_mem(cipher_text, &size);
         return string(result, size);
+        
     }
 }
