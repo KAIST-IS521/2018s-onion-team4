@@ -5,20 +5,14 @@
 #include <string>
 #include <vector>
 
-#include "SelectServer/src/context.h"
+#include "../SelectServer/src/context.h"
 
 #define HANDSHAKE 0
 #define MSG 1
-#define IMG 2
 
 using namespace std;
 void d(string s);
-namespace Socket {
-  int ConnectTo(int port, string ip);
-  int ConnectTo(int port, uint32_t ip);
-  uint32_t GetIPaddr(int fd);
-  uint16_t GetPort(int fd);
-}
+
 
 namespace Packet {
     class Packet
@@ -69,29 +63,14 @@ namespace Packet {
         private:
             int state = 0;
             uint32_t length;
-            char *message = NULL;
+            char *ct = NULL;
         public:
             pair<char *, size_t> Serialize(void);
-            string GetMessage(void);
+            string GetCT(void);
             void ContinueBuild(ReadCTX *ctx);
             Msg(int t) : Packet(MSG, t) { };
             Msg(string msg);
             ~Msg(void);
-    };
-
-    class Img : public Packet
-    {
-        private:
-            int state = 0;
-            uint32_t url_length;
-            char *url = NULL;
-        public:
-            pair<char *, size_t> Serialize(void);
-            string GetUrl(void);
-            void ContinueBuild(ReadCTX *ctx);
-            Img(int t) : Packet(IMG, t) {};
-            Img(string url);
-            ~Img();
     };
 
     Packet *Unserialize(ReadCTX *ctx);

@@ -8,10 +8,10 @@
 
 #include "SelectServer/src/server.h"
 #include "SelectServer/src/context.h"
-#include "PGP.hh"
-#include "Packet.hh"
-#include "Features.hh"
-#include "ui/UIProvider.hh"
+#include "Packet/Packet.hh"
+#include "Utils/Features.hh"
+#include "Utils/PGP.hh"
+#include "Ui/UIProvider.hh"
 
 #ifndef PORT
 #define PORT 1234
@@ -62,14 +62,13 @@ namespace OnionMessenger {
             void InitServer(void);
             void SendPacket(Packet::Packet *packet, int fd);
             bool SendMsgAsync(string msg, string user);
-            bool SendImageAsync(string url, string user);
+            //bool SendImageAsync(string url, string user);
         public:
             OnionMessenger(bool usetui, string priv, string pub, uint16_t port);
             void Loop(void);
             void HandleCommand(char *msg);
             bool RecvHandShake(Packet::HandShake *hs);
             void RecvMsgAsync(Packet::Msg *msg);
-            void RecvImageAsync(Packet::Img *img);
             void CleanFuture(void);
             void HandShake(uint32_t ip, uint16_t port);
             void HandShake(string ip, uint16_t port);

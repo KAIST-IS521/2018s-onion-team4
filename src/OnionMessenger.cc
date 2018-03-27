@@ -1,11 +1,11 @@
 #include "OnionMessenger.hh"
-#include "ui/tui.hh"
-#include "ui/cui.hh"
+#include "Ui/tui.hh"
+#include "Ui/cui.hh"
 #include <algorithm>
 #include <string>
 #include <ncurses.h>
 #include <unistd.h>
-
+#include "Packet/Socket.hh"
 
 namespace MessageHandler {
     bool handleHandShake(void *aux, Packet::Packet *packet) {
@@ -18,12 +18,6 @@ namespace MessageHandler {
         auto messenger = static_cast<OnionMessenger::OnionMessenger *>(aux);
         auto msg = static_cast<Packet::Msg *>(packet);
         messenger->RecvMsgAsync(msg);
-    }
-
-    void handleImg(void *aux, Packet::Packet *packet) {
-        auto messenger = static_cast<OnionMessenger::OnionMessenger *>(aux);
-        auto img = static_cast<Packet::Img *>(packet);
-        messenger->RecvImageAsync(img);
     }
 }
 
@@ -39,11 +33,7 @@ namespace OnionMessenger {
                 case MSG:
                     MessageHandler::handleMsg(aux, packet);
                     break;
-                case IMG:
-                    MessageHandler::handleImg(aux, packet);
-                    break;
                 default:
-                    d("Packet recv!!!\n");
                     ret = 0;
                     break;
             }
@@ -70,19 +60,9 @@ namespace OnionMessenger {
     }
 
     void OnionMessenger::RecvMsgAsync(Packet::Msg *msg) {
-        string ct = msg->GetMessage();
+        string ct = msg->GetCT();
         thread([this, ct](){
             provider->PushMessage(pgp->Decrypt(ct)); }).detach();
-    }
-
-    void OnionMessenger::RecvImageAsync(Packet::Img *img) {
-        string ct = img->GetUrl();
-        auto future = async(launch::async, [this, &ct] ()
-                { auto img = Features::DisplayAArt(pgp->Decrypt(ct));
-                  provider->PushMessage(img); });
-        futureMutex.lock();
-        futures.push_back(move(future));
-        futureMutex.unlock();
     }
 
     void OnionMessenger::SendPacket(Packet::Packet *packet, int fd) {
@@ -90,6 +70,7 @@ namespace OnionMessenger {
         packet->SendFd(server, fd);
         serverMutex.unlock();
     }
+
     bool OnionMessenger::SendMsgAsync(string msg, string user) {
         if (users.find(user) != users.end()) {
             auto rep = users[user];
@@ -98,30 +79,6 @@ namespace OnionMessenger {
                 auto packet = new Packet::Msg(s);
                 SendPacket(packet, rep->GetFd());
                 }).detach();
-            /*
-            auto future = async(launch::async, [this, rep, &msg] ()
-                    { auto packet = new Packet::Msg(rep->Encrypt(msg));
-                      SendPacket(packet, rep->GetFd()); });
-            provider->PushMessage("[*] Future Count : ");
-            futureMutex.lock();
-            futures.push_back(move(future));
-            futureMutex.unlock();
-            */
-            //sleep(10);
-            return true;
-        }
-        return false;
-    }
-
-    bool OnionMessenger::SendImageAsync(string img, string user) {
-        if (users.find(user) != users.end()) {
-            auto rep = users[user];
-            auto future = async(launch::async, [this, rep, &img] ()
-                    { auto packet = new Packet::Img(rep->Encrypt(img));
-                      SendPacket(packet, rep->GetFd()); });
-            futureMutex.lock();
-            futures.push_back(move(future));
-            futureMutex.unlock();
             return true;
         }
         return false;
@@ -202,15 +159,6 @@ namespace OnionMessenger {
         SendPacket(hs, fd);
     }
 
-    void OnionMessenger::CleanFuture(void) {
-        futureMutex.lock();
-        auto filt =
-            [](const future<void>& f)
-            { return f.wait_for(chrono::seconds(0)) == future_status::ready; };
-        futures.erase(remove_if(futures.begin(), futures.end(), filt));
-        futureMutex.unlock();
-    }
-
     string OnionMessenger::LoginUser(void) {
         int idx = 1;
         char msg[30] = {0, };
@@ -270,7 +218,7 @@ namespace OnionMessenger {
         if (!cmd.compare("/msg")) {
             SendMsgAsync(input, id);
         } else if(!cmd.compare("/image")) {
-            SendImageAsync(input, id);
+            //SendImageAsync(input, id);
         } else {
             auto err = ("Unknown Command: " + string(msg));
             provider->PushMessage((char *)err.c_str());
