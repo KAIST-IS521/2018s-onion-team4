@@ -1,5 +1,4 @@
 #include "OnionMessenger.hh"
-#include "PGP.hh"
 #include <cstdlib>
 #include <stdio.h>
 #include <unistd.h>

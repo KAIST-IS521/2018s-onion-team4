@@ -5,58 +5,8 @@
 #include <fcntl.h>
 #include <string>
 #include <unistd.h>
-#include <netinet/in.h>
-#include <sys/socket.h>
-#include <sys/types.h>
+
 #include "Packet.hh"
-
-namespace Socket {
-  int ConnectServerInternal(int port, uint32_t ip) {
-      int client_fd;
-      struct sockaddr_in client_addr;
-
-      client_fd = socket(AF_INET, SOCK_STREAM, 0);
-
-      client_addr.sin_addr.s_addr = ip;
-      client_addr.sin_family = AF_INET;
-      client_addr.sin_port = htons(port);
-
-      if (connect(client_fd, (struct sockaddr *)&client_addr,
-                  sizeof(client_addr)) == -1)
-      {
-          close(client_fd);
-          return -1;
-      }
-
-      return client_fd;
-  }
-
-  int ConnectTo(int port, string ip) {
-      return ConnectServerInternal(port, inet_addr(ip.c_str()));
-  }
-
-  int ConnectTo(int port, uint32_t ip) {
-      return ConnectServerInternal(port, htonl(ip));
-  }
-
-  uint32_t GetIPaddr(int fd) {
-    struct sockaddr_in temp_addr;
-    socklen_t len = sizeof(struct sockaddr_in);
-
-    getpeername(fd, (struct sockaddr *)&temp_addr, &len);
-
-    return ntohl(temp_addr.sin_addr.s_addr);
-  }
-
-  uint16_t GetPort(int fd) {
-    struct sockaddr_in temp_addr;
-    socklen_t len = sizeof(struct sockaddr_in);
-
-    getpeername(fd, (struct sockaddr *)&temp_addr, &len);
-
-    return ntohs(temp_addr.sin_port);
-  }
-}
 
 namespace Packet {
     class PacketBuilder
@@ -99,18 +49,16 @@ namespace Packet {
             };
     };
 
+    // XXX: PACKET INTERFACE
     Packet* Unserialize(ReadCTX *ctx) {
         Packet *packet;
         char type;
         if (!ctx->aux) {
             CTXRead(ctx, (char *)&type, 1);
-            cout << type << endl;
             if (type == HANDSHAKE) {
                 packet = new HandShake(ctx->fd);
             } else if(type == MSG) {
                 packet = new Msg(ctx->fd);
-            } else if(type == IMG) {
-                packet = new Img(ctx->fd);
             } else {
                 return NULL;
             }
@@ -123,17 +71,15 @@ namespace Packet {
 
     void Packet::SendFd(Server *server, int fd) {
         auto s = Serialize();
-        d(string(s.first, s.second));
-        d("FD is valid? " + to_string(fcntl(fd, F_GETFD)));
-        d("FD ? " + to_string(fd));
         ServerWrite(server, fd, s.first, s.second);
         free(s.first);
         delete this;
     }
 
+    // XXX: SECTION FOR MSG
     pair<char *, size_t> Msg::Serialize(void) {
         PacketBuilder builder;
-        builder << (uint8_t) MSG << htonl(length) << string(message, length);
+        builder << (uint8_t) MSG << htonl(length) << string(ct, length);
         return builder.Finalize();
     }
 
@@ -147,8 +93,8 @@ namespace Packet {
         }
         // state for parse message
         if (state == 1 && CTXGetsz(ctx) >= length) {
-            message = (char *)calloc(1, length+1);
-            CTXRead(ctx, message, length);
+            ct = (char *)calloc(1, length+1);
+            CTXRead(ctx, ct, length);
             // Release unused buffer
             CTXDiscard(ctx);
             SetReady();
@@ -158,19 +104,20 @@ namespace Packet {
         ctx->aux = this;
     }
 
-    string Msg::GetMessage(void) {
-        return string(message, length);
+    string Msg::GetCT(void) {
+        return string(ct, length);
     }
 
     Msg::~Msg(void) {
-        if (message) free(message);
+        if (ct) free(ct);
     }
 
     Msg::Msg(string msg) : Packet(MSG) {
-        message = strdup(msg.c_str());
+        ct = strdup(msg.c_str());
         length = msg.size();
     }
 
+    // XXX: SECTION FOR HANDSHAKE
     HandShake::HandShake(string _id, vector<uint32_t> cIps,
             vector<uint16_t>cPorts, string pk) : Packet(HANDSHAKE) {
             id = strdup(_id.c_str());
@@ -270,48 +217,5 @@ namespace Packet {
             return;
         }
         ctx->aux = this;
-
-    }
-
-    Img::Img(string url) : Packet(IMG) {
-        url_length = url.size();
-        url = strdup(url.c_str());
-    }
-
-    pair<char *, size_t> Img::Serialize() {
-        PacketBuilder builder;
-        builder << (uint8_t) IMG
-                << htonl(url_length)
-                << string(url, url_length);
-        return builder.Finalize();
-   }
-
-    void Img::ContinueBuild(ReadCTX *ctx) {
-        int l;
-        // state for parse length
-        if (state == 0 && CTXGetsz(ctx) >= 4) {
-            CTXRead(ctx, (char *)&l, 4);
-            url_length = ntohl(l);
-            state = 1;
-        }
-        // state for parse message
-        if (state == 1 && CTXGetsz(ctx) >= url_length) {
-            url = (char *)calloc(1, url_length + 1);
-            CTXRead(ctx, url, url_length);
-            // Release unused buffer
-            CTXDiscard(ctx);
-            SetReady();
-            ctx->aux = NULL;
-            return;
-        }
-        ctx->aux = this;
-    }
-
-    string Img::GetUrl(void) {
-        return string(url, url_length);
-    }
-
-    Img::~Img(void) {
-        if (url) free(url);
     }
 }
