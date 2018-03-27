@@ -29,7 +29,7 @@ namespace OnionMessenger {
             thread *serverTh;
             mutex serverMutex;
 
-            uint16_t port;
+            uint16_t PORT;
 
             map<string, User::Rep *> users;
 
