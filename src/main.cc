@@ -108,8 +108,6 @@ int main(int argc, char **argv) {
                      std::istreambuf_iterator<char>());
     string pubData((std::istreambuf_iterator<char>(pubkey)),
                      std::istreambuf_iterator<char>());
-    PGP::initGPG();
-
     auto onion =
         new OnionMessenger::OnionMessenger(useTUI, privData, pubData, port);
     if (!node.empty()) {

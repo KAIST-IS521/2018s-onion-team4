@@ -211,13 +211,12 @@ namespace TUIImplement {
         mvwaddstr(infoWin, 0, 2,
                 "Please enter the Github ID and user information to unlock " \
                 "the OpenPGP secret key for user:");
-
-        char *s = strstr((char *)uid, " ");
+        
         mvwaddstr(infoWin, 2, 2, "\"");
-        mvwaddstr(infoWin, 2, 3, s+1);
-        mvwaddstr(infoWin, 2, 3 + strlen(s+1), "\", ");
-        mvwaddstr(infoWin, 2, 6 + strlen(s+1), "ID ");
-        mvwaddnstr(infoWin, 2, 9 + strlen(s+1), info, 8);
+        mvwaddstr(infoWin, 2, 3, uid);
+        mvwaddstr(infoWin, 2, 3 + strlen(uid), "\", ");
+        mvwaddstr(infoWin, 2, 6 + strlen(uid), "ID ");
+        mvwaddnstr(infoWin, 2, 9 + strlen(uid), info, 8);
 
         if (msg) {
             wattron(infoWin, COLOR_PAIR(4));
