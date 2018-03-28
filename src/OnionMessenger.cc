@@ -92,12 +92,7 @@ namespace OnionMessenger {
 
     void OnionMessenger::Relay(Message::OnionLayer *msg) {
         string user = msg->GetNextDst();
-        provider->PushMessage("-> " + user);
         if (user == ID) {
-            endwin();
-            cout << "!!!" << msg->GetData() << endl;
-            cout << "!!!" << pgp->Decrypt(msg->GetData()) << endl;
-            exit(0);
             auto data = Message::Unserialize(pgp->Decrypt(msg->GetData()));
             switch (data->GetType()) {
                 case Message::ONIONLAYER:
@@ -165,13 +160,12 @@ namespace OnionMessenger {
     void OnionMessenger::DoOnionRouting(Message::MsgBody *bd, User::Rep *rep) {
         thread([this, rep, bd]() {
                 Message::OnionLayer *layer = bd->AddLayer(rep);
-                // XXX: Should we need to append ourself into routing pool?
                 auto item = users.begin();
                 advance(item, rand() % users.size());
                 User::Rep *nrep = (*item).second;
                 provider->PushMessage(nrep->GetId());
                 provider->PushMessage("->");
-                for(int i = 0; i < rand() % 10; i++) {
+                for(int i = 0; i < 0; i++) {//rand() % 10; i++) {
                     layer = layer->AddLayer(nrep);
                     auto item = users.begin();
                     advance(item, rand() % users.size());

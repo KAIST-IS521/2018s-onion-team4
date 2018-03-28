@@ -61,7 +61,7 @@ namespace Message {
         memcpy(&length, data.substr(1, 4).c_str(), 4);
         length = ntohl(length);
         string id = data.substr(5, length);
-        string left = data.substr(6+length);
+        string left = data.substr(5+length);
 
         switch (ty) {
             case ONIONLAYER:
