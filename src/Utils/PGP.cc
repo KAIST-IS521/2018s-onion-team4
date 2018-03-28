@@ -15,13 +15,14 @@ namespace PGP {
     }
 
     void PGP::ImportKey(string key){
+        char temp[] = "/tmp/dataXXXXXX";
         char buf[1024] = "";
-        string keyfname = tmpnam(NULL);
-        ofstream keyfile(keyfname);
-        keyfile << key;
-        keyfile.close();
+        int keyfd = mkstemp(temp);
+        write(keyfd, key.c_str(), key.size());
+        string path = GetPathFromFd(keyfd);
+        close(keyfd);
 
-        string command = "/usr/bin/gpg --import " + keyfname + " 2>&1";
+        string command = "/usr/bin/gpg --import " + path + " 2>&1";
         FILE* pipe = popen(command.c_str(), "r");
         
         do{
@@ -39,20 +40,21 @@ namespace PGP {
         setPassInfo(info);
         setUid(id);
 
-        unlink(keyfname.c_str());
+        remove(path.c_str());
     }
 
     void PGP::ImportSecretKey(string key){
-        string keyfname = tmpnam(NULL);
-        ofstream keyfile(keyfname);
-        keyfile << key;
-        keyfile.close();
+        char temp[] = "/tmp/dataXXXXXX";
+        int keyfd = mkstemp(temp);
+        write(keyfd, key.c_str(), key.size());
+        string path = GetPathFromFd(keyfd);
+        close(keyfd);
 
-        string command = "/usr/bin/gpg --import " + keyfname + " 2>&1";
+        string command = "/usr/bin/gpg --import " + path + " 2>&1";
         FILE* pipe = popen(command.c_str(), "r");
 
         pclose(pipe);
-        unlink(keyfname.c_str());
+        remove(path.c_str());
     }
 
 
@@ -113,15 +115,16 @@ namespace PGP {
     }
 
     string PGP::Decrypt(string ct) {
+        char temp[] = "/tmp/dataXXXXXX";
         char buf[1024];
         unsigned int size = 0;
-        string result = "";
-        string datafname = tmpnam(NULL);
-        ofstream datafile(datafname);
-        datafile << ct;
-        datafile.close();
+        int datafd = mkstemp(temp);
+        write(datafd, ct.c_str(), ct.size());
+        string path = GetPathFromFd(datafd);
+        close(datafd);
 
-        string command = "echo " + string(passphrase) + " | /usr/bin/gpg --armor --no-tty --passphrase-fd 0 --decrypt " + datafname + " 2>/dev/null";
+        string result = "";
+        string command = "echo " + string(passphrase) + " | /usr/bin/gpg --armor --no-tty --passphrase-fd 0 --decrypt " + path + " 2>/dev/null";
         FILE* pipe = popen(command.c_str(), "r");
         do {
             size = fread(buf, 1, 1024, pipe);
@@ -129,26 +132,27 @@ namespace PGP {
         } while(size == 1024);
 
         pclose(pipe);
-        unlink(datafname.c_str());
+        remove(path.c_str());
         return result;
     }
 
     string PGP::Encrypt(string pt) {
-        string datafname = tmpnam(NULL);
-        ofstream datafile(datafname);
-        datafile << pt;
-        datafile.close();
+        char temp[] = "/tmp/dataXXXXXX";
+        int datafd = mkstemp(temp);
+        write(datafd, pt.c_str(), pt.size());
+        string path = GetPathFromFd(datafd);
+        close(datafd);
 
-        string command = "/usr/bin/gpg --armor --trust-model always -r " + passphrase_info + " --encrypt " + datafname;
+        string command = "/usr/bin/gpg --armor --trust-model always -r " + passphrase_info + " --encrypt " + path;
         FILE* pipe = popen(command.c_str(), "r");
         pclose(pipe);
 
-        string s = datafname + ".asc";
+        string s = path + ".asc";
         ifstream encfile(s);
         string result((std::istreambuf_iterator<char>(encfile)),
                          std::istreambuf_iterator<char>());
-        unlink(datafname.c_str());
-        unlink(s.c_str());
+        remove(path.c_str());
+        remove(s.c_str());
         return result;
     }
 }

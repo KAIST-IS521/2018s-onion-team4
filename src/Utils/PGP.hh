@@ -32,7 +32,6 @@ namespace PGP {
             string passphrase_info;
             gpgme_key_t privkey;
             char* passphrase;
-            const char* temp = "/tmp/dataXXXXXX";
 
             void ImportKey(string pubkey);
             void ImportSecretKey(string prikey);
