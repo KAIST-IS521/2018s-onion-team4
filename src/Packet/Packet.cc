@@ -40,22 +40,24 @@ namespace Packet {
     // XXX: SECTION FOR MSG
     string Msg::Serialize(void) {
         PacketBuilder::Builder builder;
-        builder << (uint8_t) MSG << htonl(length) << string(ct, length);
+        builder << (uint8_t) MSG << htonl(ct.size()) << ct;
         return builder.Finalize();
     }
 
     void Msg::ContinueBuild(ReadCTX *ctx) {
-        int l;
+        uint32_t length;
         // state for parse length
         if (state == 0 && CTXGetsz(ctx) >= 4) {
-            CTXRead(ctx, (char *)&l, 4);
-            length = ntohl(l);
+            CTXRead(ctx, (char *)&length, 4);
+            length = ntohl(length);
             state = 1;
         }
         // state for parse message
         if (state == 1 && CTXGetsz(ctx) >= length) {
-            ct = (char *)calloc(1, length+1);
-            CTXRead(ctx, ct, length);
+            char *tmp = (char *)calloc(1, length);
+            CTXRead(ctx, tmp, length);
+            ct.assign(tmp, length);
+            free(tmp);
             // Release unused buffer
             CTXDiscard(ctx);
             SetReady();
@@ -66,16 +68,14 @@ namespace Packet {
     }
 
     string Msg::GetCT(void) {
-        return string(ct, length);
+        return ct;
     }
 
     Msg::~Msg(void) {
-        if (ct) free(ct);
     }
 
     Msg::Msg(string msg) : Packet(MSG) {
-        ct = strdup(msg.c_str());
-        length = msg.size();
+        ct = msg;
     }
 
     // XXX: SECTION FOR HANDSHAKE

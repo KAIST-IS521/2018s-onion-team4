@@ -12,10 +12,10 @@ namespace PGP {
         ofstream keyfile(keyfname);
         keyfile << key;
         keyfile.close();
-        
+
         string command = "/usr/bin/gpg --import " + keyfname + " 2>&1";
         FILE* pipe = popen(command.c_str(), "r");
-        
+
         fgets(buf, 1024, pipe);
         string s = string(buf);
         s = s.substr(s.find("key "));
@@ -23,11 +23,11 @@ namespace PGP {
 
         s = s.substr(s.find('\"'));
         string id = s.substr(1, s.find('\"', 1)-1);
-        
+
         pclose(pipe);
         setPassInfo(info);
         setUid(id);
-        
+
         unlink(keyfname.c_str());
     }
 
@@ -36,7 +36,7 @@ namespace PGP {
         ofstream keyfile(keyfname);
         keyfile << key;
         keyfile.close();
-        
+
         string command = "/usr/bin/gpg --import " + keyfname + " 2>&1";
         FILE* pipe = popen(command.c_str(), "r");
 
@@ -44,7 +44,7 @@ namespace PGP {
         unlink(keyfname.c_str());
     }
 
-         
+
     void PGP::InitPrikey(string prikey) {
         priArmored.assign(prikey);
         ImportSecretKey(prikey);
@@ -109,13 +109,13 @@ namespace PGP {
         ofstream datafile(datafname);
         datafile << ct;
         datafile.close();
-        
+
         string command = "echo " + string(passphrase) + " | /usr/bin/gpg --armor --no-tty --passphrase-fd 0 --decrypt " + datafname + " 2>/dev/null";
         FILE* pipe = popen(command.c_str(), "r");
-        do{
+        do {
             size = fread(buf, 1, 1024, pipe);
             result += string(buf, size);
-        }while(size == 1024);
+        } while(size == 1024);
 
         pclose(pipe);
         unlink(datafname.c_str());

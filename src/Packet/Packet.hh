@@ -64,8 +64,7 @@ namespace Packet {
     {
         private:
             int state = 0;
-            uint32_t length;
-            char *ct = NULL;
+            string ct;
         public:
             string Serialize(void);
             string GetCT(void);
