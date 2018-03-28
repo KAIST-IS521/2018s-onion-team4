@@ -44,7 +44,6 @@ namespace Features {
             //failed to download
             return false;
         }
-
         long res_code = 0;
         curl_easy_getinfo(curlCtx, CURLINFO_RESPONSE_CODE, &res_code);
         if (!((res_code == 200 || res_code == 201) &&
@@ -52,9 +51,7 @@ namespace Features {
             //page error
             return false;
         }
-
         curl_easy_cleanup(curlCtx);
-
         file->close();
         return true;
     }
@@ -70,25 +67,21 @@ namespace Features {
             return Asciiart(filepath.c_str());
         }
     }
+
     string Asciiart(const char *filepath) {
         string path = "/bin/go/bin/goasciiart " ;
         string result= "";
         path.append(filepath).append(" -w 80");
         char buf[1024];
         FILE *fp=NULL;
+        int sz;
         fp=popen((char*)path.c_str(),"r");
-        if(NULL==fp)
-        {
-          //error
+        if (fp) {
+            while ((sz = fgets(buf,1024,fp)) > 0) {
+                result.append(string(buf, sz));
+            }
+            pclose(fp);
         }
-        while(fgets(buf,1024,fp)){
-            result.append(buf);
-        }
-        result.append(buf);
-        pclose(fp);
-
-
-
         return result;
     }
 }
