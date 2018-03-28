@@ -1,6 +1,6 @@
 #include "OnionMessenger.hh"
-#include "Ui/tui.hh"
-#include "Ui/cui.hh"
+#include "UI/tui.hh"
+#include "UI/cui.hh"
 #include <algorithm>
 #include <string>
 #include <ncurses.h>

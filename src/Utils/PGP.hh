@@ -20,7 +20,6 @@ namespace PGP {
             exit(1); \
         } \
     } while(0);
-    void initGPG(void);
     class PGP
     {
         private:
@@ -31,6 +30,8 @@ namespace PGP {
             gpgme_key_t privkey;
             char* passphrase;
 
+            void ImportKey(string pubkey);
+            void ImportSecretKey(string prikey);
             void get_passphrase_info(void);
             void InitPrikey(string prikey);
             void InitPubkey(string pubkey);
