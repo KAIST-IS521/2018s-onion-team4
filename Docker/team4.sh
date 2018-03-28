@@ -12,9 +12,8 @@ if [ $NOTUI ];
 	then a=`expr $a + 2`
 fi
 if [ $HELP ];
-	then a=`expr $a + 4`
-fi
-if [ $a = 0 ];
+	then ./OnionMessenger --help
+elif [ $a = 0 ];
 	then ./OnionMessenger --priv $PRIV --pub $PUB -p $PORT
 elif [ $a = 1 ];
 	then ./OnionMessenger --priv $PRIV --pub $PUB --node $NODE -p $PORT
@@ -22,12 +21,4 @@ elif [ $a = 2 ];
 	then ./OnionMessenger --priv $PRIV --pub $PUB -p $PORT --notui
 elif [ $a = 3 ];
   then ./OnionMessenger --priv $PRIV --pub $PUB -p $PORT --notui --node $NODE
-elif [ $a = 4 ];
-  then ./OnionMessenger --priv $PRIV --pub $PUB -p $PORT --help
-elif [ $a = 5 ];
-  then ./OnionMessenger --priv $PRIV --pub $PUB -p $PORT --help --node $NODE
-elif [ $a = 6 ];
-  then ./OnionMessenger --priv $PRIV --pub $PUB -p $PORT --notui --help
-elif [ $a = 7 ];
-  then ./OnionMessenger --priv $PRIV --pub $PUB -p $PORT --notui --help --node $NODE
 fi
