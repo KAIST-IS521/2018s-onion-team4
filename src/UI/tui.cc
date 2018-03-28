@@ -402,5 +402,9 @@ namespace TUI
         wattron(TUIImplement::chatWin, COLOR_PAIR(1));
         msgLock.unlock();
     }
-    
+
+    void TUIProvider::Clear(void) {
+        wclear(TUIImplement::chatWin);
+        wrefresh(TUIImplement::chatWin);
+    }
 }

@@ -41,7 +41,7 @@ namespace OnionMessenger {
             bool SendImgAsync(string msg, string user);
             void List(void);
             void Help(void);
-            void Welcome(void);
+            void Clear(void);
             void Relay(Message::OnionLayer *msg);
             void HandleMessage(Message::MsgLayer *msg);
             void HandleAArt(Message::ImgLayer *msg);

@@ -271,6 +271,8 @@ namespace OnionMessenger {
             Help();
         } else if(!cmd.compare("/list") || !cmd.compare("/l")) {
             List();
+        } else if(!cmd.compare("/clr") || !cmd.compare("/c")) {
+            Clear();
         } else {
             auto err = ("[*] Unknown Command :\t" + string(msg));
             provider->PushError((char *)err.c_str());
@@ -297,6 +299,10 @@ namespace OnionMessenger {
         for (auto u : users) {
             provider->PushNotification(u.first);            
         }
+    }
+
+    void OnionMessenger::Clear(void) {
+        provider->Clear();
     }
     
     // XXX: Init
