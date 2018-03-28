@@ -11,14 +11,10 @@ int main(){
                      std::istreambuf_iterator<char>());
     string prikey((std::istreambuf_iterator<char>(pri)),
                      std::istreambuf_iterator<char>());
-    auto PGP = new PGP::PGP(prikey, pubkey);
-    while(!PGP->Verify_Pass(getpass("Passpharse : ")));
+    auto PGP = new PGP::PGP(pubkey);
     string cipher = PGP->Encrypt(string("This is test\x00hello world", 24));
 
     std::cout << "Cipher : " << cipher << "bb" << std::endl;
-    std::cout << "Result : " << PGP->Decrypt(cipher) << "aa" << std::endl;
-    std::cout << "uid : " << PGP->getUid() << std::endl;
-    std::cout << "info : " << PGP->getPassInfo() << std::endl;
 
     return 0;
 }
