@@ -289,6 +289,7 @@ namespace OnionMessenger {
         provider->PushNotification("  /msg gildong Hello");
         provider->PushNotification("  /i simsim2 http://cfile28.uf.tistory.com/image/176C5E494E0B556E043D7F\n");
     }
+    
     void OnionMessenger::List(void) {
         provider->PushNotification("Online");
         provider->PushNotification("--------------------------------");
@@ -297,6 +298,7 @@ namespace OnionMessenger {
             provider->PushNotification(u.first);            
         }
     }
+    
     // XXX: Init
     string OnionMessenger::LoginUser(void) {
         int idx = 1;

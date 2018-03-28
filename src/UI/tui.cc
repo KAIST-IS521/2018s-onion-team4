@@ -316,6 +316,13 @@ namespace TUIImplement {
         }
         return input;
     }
+    
+    void Welcome(void) {
+        wattron(TUIImplement::chatWin, COLOR_PAIR(3));
+        TUIImplement::writeChat("Welcome to VOM!");
+        TUIImplement::writeChat("Please enter \"/h\" or \"/help\" to get more information.\n");
+        wattron(TUIImplement::chatWin, COLOR_PAIR(1));
+    }
 
     void drawOnionChatUI(const char *uid, const char *keyid,
             void (*handler)(char *, void *), void *aux)
@@ -329,6 +336,7 @@ namespace TUIImplement {
         drawInputWin();
         wcursyncup(inputWin);
         wrefresh(inputWin);
+        Welcome();
         while (true) {
             char *userin = handleInput();
             if (userin) {
@@ -394,4 +402,5 @@ namespace TUI
         wattron(TUIImplement::chatWin, COLOR_PAIR(1));
         msgLock.unlock();
     }
+    
 }
