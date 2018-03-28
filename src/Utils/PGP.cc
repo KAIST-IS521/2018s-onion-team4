@@ -103,17 +103,19 @@ namespace PGP {
 
     string PGP::Decrypt(string ct) {
         char buf[1024];
+        unsigned int size = 0;
         string result = "";
         string datafname = tmpnam(NULL);
         ofstream datafile(datafname);
         datafile << ct;
         datafile.close();
         
-        string command = "echo " + string(passphrase) + " | /usr/bin/gpg --no-tty --passphrase-fd 0 --decrypt " + datafname + " 2>/dev/null";
+        string command = "echo " + string(passphrase) + " | /usr/bin/gpg --armor --no-tty --passphrase-fd 0 --decrypt " + datafname + " 2>/dev/null";
         FILE* pipe = popen(command.c_str(), "r");
-        while(fgets(buf, 1024, pipe) != NULL){
-            result += string(buf);
-        }
+        do{
+            size = fread(buf, 1, 1024, pipe);
+            result += string(buf, size);
+        }while(size == 1024);
 
         pclose(pipe);
         unlink(datafname.c_str());
@@ -126,11 +128,11 @@ namespace PGP {
         datafile << pt;
         datafile.close();
 
-        string command = "/usr/bin/gpg --trust-model always -r " + passphrase_info + " --encrypt " + datafname;
+        string command = "/usr/bin/gpg --armor --trust-model always -r " + passphrase_info + " --encrypt " + datafname;
         FILE* pipe = popen(command.c_str(), "r");
         pclose(pipe);
 
-        string s = datafname + ".gpg";
+        string s = datafname + ".asc";
         ifstream encfile(s);
         string result((std::istreambuf_iterator<char>(encfile)),
                          std::istreambuf_iterator<char>());
