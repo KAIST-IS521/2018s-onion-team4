@@ -13,7 +13,7 @@
 #include "Utils/Features.hh"
 #include "Utils/User.hh"
 #include "Utils/PGP.hh"
-#include "Ui/UIProvider.hh"
+#include "UI/UIProvider.hh"
 
 using namespace std;
 void dbg(string s);
