@@ -17,6 +17,7 @@ namespace UI {
             virtual void PushError(string msg) = 0;
             virtual void PushChat(string user, string msg) = 0;
             virtual void PushNotification(string msg) = 0;
+            virtual void Clear(void) = 0;
     };
 }
 #endif

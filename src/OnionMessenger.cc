@@ -81,7 +81,7 @@ namespace OnionMessenger {
             }
             auto nhs = new Packet::HandShake(PORT, ID, cIps, cPorts, pgp->GetPub());
             SendPacket(nhs, hs->GetFd());
-            provider->PushNotification("[*] New user: " + hs->GetId());
+            provider->PushNotification("[*] New user :\t" + hs->GetId());
             auto user = new User::Rep(hs->GetPubKey(), hs->GetId(),
                                          tip, tport, hs->GetFd());
             users[hs->GetId()] = user;
@@ -189,6 +189,7 @@ namespace OnionMessenger {
             DoOnionRouting(layer, rep);
             return true;
         }
+        provider->PushError("[*] No such User :\t" + user);
         return false;
     }
 
@@ -256,19 +257,54 @@ namespace OnionMessenger {
                 input = input.substr(nptr + 1);
             }
         }
+        else {
+            cmd = input;
+        }
 
-        if (!cmd.compare("/msg")) {
+        if (!cmd.compare("/msg") || !cmd.compare("/m")) {
             SendMsgAsync(input, id);
             // Push sended message to client side
-        } else if(!cmd.compare("/image")) {
+        } else if(!cmd.compare("/img") || !cmd.compare("/i")) {
             SendImgAsync(input, id);
             // Push sended message to client side
+        } else if(!cmd.compare("/help") || !cmd.compare("/h")) {
+            Help();
+        } else if(!cmd.compare("/list") || !cmd.compare("/l")) {
+            List();
+        } else if(!cmd.compare("/clr") || !cmd.compare("/c")) {
+            Clear();
         } else {
-            auto err = ("Unknown Command: " + string(msg));
+            auto err = ("[*] Unknown Command :\t" + string(msg));
             provider->PushError((char *)err.c_str());
         }
     }
+    void OnionMessenger::Help(void) {
+        provider->PushNotification("Usage: /[COMMAND] {[TARGET] [MSG || [URL]}\n");
+        
+        provider->PushNotification("COMMAND");
+        provider->PushNotification("  msg,\tm : Send message to other");
+        provider->PushNotification("  img,\ti : Send asciiart image to other");
+        provider->PushNotification("  list,\tl : List online users");
+        provider->PushNotification("  help,\th : See this information\n");
 
+        provider->PushNotification("Example");
+        provider->PushNotification("  /msg gildong Hello");
+        provider->PushNotification("  /i simsim2 http://cfile28.uf.tistory.com/image/176C5E494E0B556E043D7F\n");
+    }
+    
+    void OnionMessenger::List(void) {
+        provider->PushNotification("Online");
+        provider->PushNotification("--------------------------------");
+        provider->PushNotification(ID + " [ me ]");
+        for (auto u : users) {
+            provider->PushNotification(u.first);            
+        }
+    }
+
+    void OnionMessenger::Clear(void) {
+        provider->Clear();
+    }
+    
     // XXX: Init
     string OnionMessenger::LoginUser(void) {
         int idx = 1;

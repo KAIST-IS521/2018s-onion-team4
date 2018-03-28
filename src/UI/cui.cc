@@ -85,4 +85,8 @@ namespace CUI {
         cout << msg << endl;
         lock.unlock();
     }
+
+    void CUIProvider::Clear(void) {
+        system("clear");
+    }
 }

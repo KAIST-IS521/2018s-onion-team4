@@ -24,6 +24,7 @@ namespace TUI
             void PushError(string msg);
             void PushChat(string user, string msg);
             void PushNotification(string msg);
+            void Clear(void);
             TUIProvider();
             ~TUIProvider();
     };
