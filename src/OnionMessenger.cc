@@ -159,23 +159,28 @@ namespace OnionMessenger {
     // XXX: Sender side logic
     void OnionMessenger::DoOnionRouting(Message::MsgBody *bd, User::Rep *rep) {
         thread([this, rep, bd]() {
-                Message::OnionLayer *layer = bd->AddLayer(rep);
-                auto item = users.begin();
-                advance(item, rand() % users.size());
-                User::Rep *nrep = (*item).second;
-                provider->PushMessage(nrep->GetId());
-                provider->PushMessage("->");
-                for(int i = 0; i < 0; i++) {//rand() % 10; i++) {
-                    layer = layer->AddLayer(nrep);
-                    auto item = users.begin();
-                    advance(item, rand() % users.size());
-                    nrep = (*item).second;
-                    provider->PushMessage(nrep->GetId());
-                    provider->PushMessage("->");
+                if(users.size() > 1){
+                    Message::OnionLayer *layer = bd->AddLayer(rep);
+                    User::Rep *nrep, *prev;
+                    for(int i = 0; i < rand() % 5 + 1; i++) {//rand() % 10; i++) {
+                        do{
+                            auto item = users.begin();
+                            advance(item, rand() % users.size());
+                            nrep = (*item).second;
+                        }while(prev == nrep);
+                        provider->PushMessage(nrep->GetId());
+                        provider->PushMessage("->");
+                        layer = layer->AddLayer(nrep);
+                        prev = nrep;
+                    }
+                    auto ser = layer->Serialize(nrep);
+                    SendPacket(new Packet::Msg(ser), nrep->GetFd());
+                    delete layer; // XXX: Last layer is not serialized
                 }
-                auto ser = layer->Serialize(nrep);
-                SendPacket(new Packet::Msg(ser), nrep->GetFd());
-                delete layer; // XXX: Last layer is not serialized
+                else{
+                    auto ser = bd->Serialize(rep);
+                    SendPacket(new Packet::Msg(ser), rep->GetFd());
+                }
                 }).detach();
     }
 

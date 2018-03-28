@@ -26,7 +26,10 @@ namespace PGP {
         FILE* pipe = popen(command.c_str(), "r");
         
         do{
-            fgets(buf, 1024, pipe);
+            char* p = fgets(buf, 1024, pipe);
+            if(p == NULL)
+                break;
+            cout << "[init_error] " << buf << endl;
         }while(strstr(buf, "key ") == NULL);
         string s = string(buf);
 
