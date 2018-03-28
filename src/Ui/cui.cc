@@ -31,11 +31,6 @@ namespace CUIHelper {
 
 		return input_pw;
 	}
-
-	string getInput() {
-
-	}
-
 }
 
 namespace CUI {
@@ -70,13 +65,13 @@ namespace CUI {
 
     void CUIProvider::PushMessage(char *msg) {
 		lock.lock();
-		cout << msg;
+		cout << msg << endl;
 		lock.unlock();
     }
 
     void CUIProvider::PushError(char *msg) {
 		lock.lock();
-		cout << msg;
+		cout << msg << endl;
 		lock.unlock();
     }
 }
