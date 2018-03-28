@@ -7,7 +7,7 @@
 
 namespace PGP {
     string GetPathFromFd(int fd){
-        char keyfname[TEMP_LEN];
+        char keyfname[TEMP_LEN] = {0};
         string linkpath = "/proc/self/fd/" + to_string(fd);
         if(readlink(linkpath.c_str(), keyfname, TEMP_LEN) != -1)
             return string(keyfname);
