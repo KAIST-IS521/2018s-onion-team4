@@ -17,17 +17,17 @@ namespace CUIHelper {
 		do {
 			cout << "Enter the Github Id:";
 			getline(cin, input_id);
+            cout.flush();
 		} while (input_id.empty() || input_id.length() > MAX_ID_LEN);
 
 		return input_id;
 	}
 
 	string getPw()  {
-		string input_pw = "";
+		char* input_pw = "";
 		do {
-			cout << "Enter Passphrase: " ;
-			getline(cin, input_pw);
-		} while (input_pw.empty());
+            input_pw = getpass("Enter Passphrase: ");
+		} while (strlen(input_pw) <= 0);
 
 		return input_pw;
 	}
@@ -35,7 +35,6 @@ namespace CUIHelper {
 
 namespace CUI {
     CUIProvider::CUIProvider() {
-		ios::sync_with_stdio(false);
     }
 
     CUIProvider::~CUIProvider() {
@@ -58,6 +57,7 @@ namespace CUI {
 			string prompt = uid + " @ [" + keyid + "]: ";
 			cout << prompt;
 			getline(cin, input);
+            cout.flush();
 			if(input)
 				handler(input.c_str(), aux);
 		}
