@@ -116,6 +116,7 @@ namespace PGP {
         }
 
         pclose(pipe);
+        unlink(datafname.c_str());
         return result;
     }
 
@@ -129,10 +130,12 @@ namespace PGP {
         FILE* pipe = popen(command.c_str(), "r");
         pclose(pipe);
 
-        ifstream encfile(datafname + ".gpg");
+        string s = datafname + ".gpg";
+        ifstream encfile(s);
         string result((std::istreambuf_iterator<char>(encfile)),
                          std::istreambuf_iterator<char>());
-
+        unlink(datafname.c_str());
+        unlink(s.c_str());
         return result;
     }
 }
