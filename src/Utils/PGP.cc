@@ -27,9 +27,6 @@ namespace PGP {
         
         do{
             char* p = fgets(buf, 1024, pipe);
-            if(p == NULL)
-                break;
-            cout << "[init_error] " << buf << endl;
         }while(strstr(buf, "key ") == NULL);
         string s = string(buf);
 
@@ -127,7 +124,8 @@ namespace PGP {
         close(datafd);
 
         string result = "";
-        string command = "echo " + string(passphrase) + " | /usr/bin/gpg --armor --no-tty --passphrase-fd 0 --decrypt " + path + " 2>/dev/null";
+        string command = "echo " + string(passphrase) + \
+        " | /usr/bin/gpg --armor --no-tty --passphrase-fd 0 --decrypt " + path + " 2>/dev/null";
         FILE* pipe = popen(command.c_str(), "r");
         do {
             size = fread(buf, 1, 1024, pipe);

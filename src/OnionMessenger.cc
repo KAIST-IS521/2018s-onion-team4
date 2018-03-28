@@ -81,7 +81,7 @@ namespace OnionMessenger {
             }
             auto nhs = new Packet::HandShake(PORT, ID, cIps, cPorts, pgp->GetPub());
             SendPacket(nhs, hs->GetFd());
-            provider->PushMessage("[*] New user: " + hs->GetId());
+            provider->PushNotification("[*] New user: " + hs->GetId());
             auto user = new User::Rep(hs->GetPubKey(), hs->GetId(),
                                          tip, tport, hs->GetFd());
             users[hs->GetId()] = user;
@@ -121,7 +121,7 @@ namespace OnionMessenger {
         auto sender = msg->GetSender();
         auto text = msg->GetData();
         // TODO: ADD provider->PushChat(user, text);
-        provider->PushMessage(text);
+        provider->PushChat(sender, text);
         delete msg;
     }
 
@@ -168,8 +168,6 @@ namespace OnionMessenger {
                             advance(item, rand() % users.size());
                             nrep = (*item).second;
                         }while(prev == nrep);
-                        provider->PushMessage(nrep->GetId());
-                        provider->PushMessage("->");
                         layer = layer->AddLayer(nrep);
                         prev = nrep;
                     }
@@ -267,7 +265,7 @@ namespace OnionMessenger {
             // Push sended message to client side
         } else {
             auto err = ("Unknown Command: " + string(msg));
-            provider->PushMessage((char *)err.c_str());
+            provider->PushError((char *)err.c_str());
         }
     }
 

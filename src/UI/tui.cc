@@ -259,6 +259,13 @@ namespace TUIImplement {
         wrefresh(inputWin);
         beep();
     }
+    static void writeChat(string data) {
+        wprintw(chatWin, "%s\n", data.c_str());
+        wrefresh(chatWin);
+        wcursyncup(inputWin);
+        wrefresh(inputWin);
+        beep();
+    }
 
     static void drawInputWin() {
        // Create input box and window
@@ -364,7 +371,27 @@ namespace TUI
         TUIImplement::writeChat(msg);
         msgLock.unlock();
     }
+    
+    void TUIProvider::PushChat(string sender, string msg){
+        msgLock.lock();
+        string m = "[ " + sender + " ]\t" + msg;
+        TUIImplement::writeChat(m);
+        msgLock.unlock();
+    }
 
-    void TUIProvider::PushError(char *msg) {
+    void TUIProvider::PushNotification(string msg){
+        msgLock.lock();
+        wattron(TUIImplement::chatWin, COLOR_PAIR(3));
+        TUIImplement::writeChat(msg);
+        wattron(TUIImplement::chatWin, COLOR_PAIR(1));
+        msgLock.unlock();
+    }
+
+    void TUIProvider::PushError(string msg) {
+        msgLock.lock();
+        wattron(TUIImplement::chatWin, COLOR_PAIR(4));
+        TUIImplement::writeChat(msg);
+        wattron(TUIImplement::chatWin, COLOR_PAIR(1));
+        msgLock.unlock();
     }
 }
