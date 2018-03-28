@@ -77,8 +77,8 @@ namespace Features {
         int sz;
         fp=popen((char*)path.c_str(),"r");
         if (fp) {
-            while ((sz = fgets(buf,1024,fp)) > 0) {
-                result.append(string(buf, sz));
+            while (fgets(buf,1024,fp)) {
+                result.append(buf);
             }
             pclose(fp);
         }
