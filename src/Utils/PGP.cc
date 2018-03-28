@@ -6,6 +6,14 @@
 #include <fstream>
 
 namespace PGP {
+    string GetPathFromFd(int fd){
+        char keyfname[TEMP_LEN];
+        string linkpath = "/proc/self/fd/" + to_string(fd);
+        if(readlink(linkpath.c_str(), keyfname, TEMP_LEN) != -1)
+            return string(keyfname);
+        return NULL;
+    }
+
     void PGP::ImportKey(string key){
         char buf[1024] = "";
         string keyfname = tmpnam(NULL);
@@ -16,8 +24,11 @@ namespace PGP {
         string command = "/usr/bin/gpg --import " + keyfname + " 2>&1";
         FILE* pipe = popen(command.c_str(), "r");
         
-        fgets(buf, 1024, pipe);
+        do{
+            fgets(buf, 1024, pipe);
+        }while(strstr(buf, "key ") == NULL);
         string s = string(buf);
+
         s = s.substr(s.find("key "));
         string info = s.substr(4, 8);
 
