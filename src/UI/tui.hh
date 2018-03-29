@@ -14,6 +14,7 @@ namespace TUI
     class TUIProvider : public UI::UIProvider
     {
         private:
+            string uid;
             mutex msgLock;
             mutex userLock;
             list<string> users;
@@ -23,7 +24,6 @@ namespace TUI
             void UserInputLoop(string uid, string keyid,
                     void (*handler)(char *, void *), void *aux);
 
-            // add Lock!
             void PushMessage(char *msg);
             void PushError(string msg);
             void PushChat(string user, string msg);
@@ -31,8 +31,8 @@ namespace TUI
             void Clear(void);
             void AddUser(string user);
             void RemoveUser(string user);
-            TUIProvider();
-            ~TUIProvider();
+            TUIProvider(void);
+            ~TUIProvider(void);
     };
 }
 
