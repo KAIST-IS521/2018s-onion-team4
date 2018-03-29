@@ -59,7 +59,8 @@ namespace OnionMessenger {
             auto port = portVec.begin();
             for (;ip != ipVec.end(); ip++, port++) {
                 for (auto u : users) {
-                    if (u.second->GetIp() == *ip && u.second->GetPort() == *port) {
+                    if (u.second->GetIp() == *ip &&
+                        u.second->GetPort() == *port) {
                         find = true;
                         break;
                     }
@@ -79,9 +80,10 @@ namespace OnionMessenger {
                 cIps.push_back(u.second->GetIp());
                 cPorts.push_back(u.second->GetPort());
             }
-            auto nhs = new Packet::HandShake(PORT, ID, cIps, cPorts, pgp->GetPub());
+            auto nhs =
+                new Packet::HandShake(PORT, ID, cIps, cPorts, pgp->GetPub());
             SendPacket(nhs, hs->GetFd());
-            provider->PushNotification("[*] New user :\t" + hs->GetId());
+            provider->AddUser(hs->GetId());
             auto user = new User::Rep(hs->GetPubKey(), hs->GetId(),
                                          tip, tport, hs->GetFd());
             users[hs->GetId()] = user;
@@ -120,7 +122,6 @@ namespace OnionMessenger {
     void OnionMessenger::HandleMessage(Message::MsgLayer *msg) {
         auto sender = msg->GetSender();
         auto text = msg->GetData();
-        // TODO: ADD provider->PushChat(user, text);
         provider->PushChat(sender, text);
         delete msg;
     }
@@ -162,22 +163,22 @@ namespace OnionMessenger {
                 if(users.size() > 1){
                     Message::OnionLayer *layer = bd->AddLayer(rep);
                     User::Rep *nrep, *prev;
-                    for(int i = 0; i < rand() % 5 + 1; i++) {//rand() % 10; i++) {
-                        do{
+                    for (int i = 0; i < rand() % 5 + 1; i++) {
+                        do {
                             auto item = users.begin();
                             advance(item, rand() % users.size());
                             nrep = (*item).second;
-                        }while(prev == nrep);
+                        } while(prev == nrep);
                         layer = layer->AddLayer(nrep);
                         prev = nrep;
                     }
                     auto ser = layer->Serialize(nrep);
                     SendPacket(new Packet::Msg(ser), nrep->GetFd());
                     delete layer; // XXX: Last layer is not serialized
-                }
-                else{
+                } else {
                     auto ser = bd->Serialize(rep);
                     SendPacket(new Packet::Msg(ser), rep->GetFd());
+                    delete bd;
                 }
                 }).detach();
     }
@@ -207,11 +208,11 @@ namespace OnionMessenger {
     void OnionMessenger::HandShake(string ip, uint16_t port) {
         vector<uint32_t> cIps;
         vector<uint16_t> cPorts;
-
         for (auto u : users) {
             cIps.push_back(u.second->GetIp());
             cPorts.push_back(u.second->GetPort());
         }
+
         int fd = Socket::ConnectTo(port, ip);
         serverMutex.lock();
         ServerFDadd(server, fd);
@@ -223,11 +224,11 @@ namespace OnionMessenger {
     void OnionMessenger::HandShake(uint32_t ip, uint16_t port) {
         vector<uint32_t> cIps;
         vector<uint16_t> cPorts;
-
         for (auto u : users) {
             cIps.push_back(u.second->GetIp());
             cPorts.push_back(u.second->GetPort());
         }
+
         int fd = Socket::ConnectTo(port, ip);
         serverMutex.lock();
         ServerFDadd(server, fd);
@@ -244,8 +245,9 @@ namespace OnionMessenger {
 
     void OnionMessenger::HandleCommand(char *msg) {
         if (!msg) return;
-        string input;
-        string cmd(""), id("");
+        string input, cmd;
+        input = cmd = msg;
+        string id("");
         input.assign(msg);
         auto nptr = input.find(" ");
         if (nptr != string::npos) {
@@ -257,9 +259,6 @@ namespace OnionMessenger {
                 input = input.substr(nptr + 1);
             }
         }
-        else {
-            cmd = input;
-        }
 
         if (!cmd.compare("/msg") || !cmd.compare("/m")) {
             SendMsgAsync(input, id);
@@ -269,8 +268,6 @@ namespace OnionMessenger {
             // Push sended message to client side
         } else if(!cmd.compare("/help") || !cmd.compare("/h")) {
             Help();
-        } else if(!cmd.compare("/list") || !cmd.compare("/l")) {
-            List();
         } else if(!cmd.compare("/clr") || !cmd.compare("/c")) {
             Clear();
         } else {
@@ -279,32 +276,21 @@ namespace OnionMessenger {
         }
     }
     void OnionMessenger::Help(void) {
-        provider->PushNotification("Usage: /[COMMAND] {[TARGET] [MSG || [URL]}\n");
-        
-        provider->PushNotification("COMMAND");
-        provider->PushNotification("  msg,\tm : Send message to other");
-        provider->PushNotification("  img,\ti : Send asciiart image to other");
-        provider->PushNotification("  list,\tl : List online users");
-        provider->PushNotification("  help,\th : See this information\n");
-
-        provider->PushNotification("Example");
-        provider->PushNotification("  /msg gildong Hello");
-        provider->PushNotification("  /i simsim2 http://cfile28.uf.tistory.com/image/176C5E494E0B556E043D7F\n");
-    }
-    
-    void OnionMessenger::List(void) {
-        provider->PushNotification("Online");
-        provider->PushNotification("--------------------------------");
-        provider->PushNotification(ID + " [ me ]");
-        for (auto u : users) {
-            provider->PushNotification(u.first);            
-        }
+        provider->PushNotification(\
+                "Usage: /[COMMAND] {[TARGET] [MSG || [URL]}\n"
+                "Command\n"
+                "  msg,\tm : Send message to other\n"
+                "  img,\ti : Send asciiart image to other\n"
+                "  help,\th : See this information\n"
+                "Example"
+                "  /msg gildong Hello"
+                "  /i simsim2 http://image.com/image.jpg\n");
     }
 
     void OnionMessenger::Clear(void) {
         provider->Clear();
     }
-    
+
     // XXX: Init
     string OnionMessenger::LoginUser(void) {
         int idx = 1;
