@@ -12,6 +12,7 @@ RUN apt-get install -y ca-certificates
 RUN apt-get install -y golang-go
 RUN apt-get install -y apt-utils
 ADD team4.sh /root/team4.sh
+RUN chmod +x /root/team4.sh
 RUN rm -rf /var/lib/apt/lists/* && \
     apt-get clean
 

@@ -9,7 +9,7 @@ namespace User {
         port = _port;
     }
 
-    Rep::~Rep() {
+    Rep::~Rep(void) {
         delete pgp;
     }
 }

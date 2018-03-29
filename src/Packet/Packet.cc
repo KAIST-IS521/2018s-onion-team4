@@ -71,9 +71,6 @@ namespace Packet {
         return ct;
     }
 
-    Msg::~Msg(void) {
-    }
-
     Msg::Msg(string msg) : Packet(MSG) {
         ct = msg;
     }
@@ -105,7 +102,6 @@ namespace Packet {
                 << htonl(pubkey_length)
                 << string(pubkey, pubkey_length)
                 << htonl(connected_nodes);
-
         auto iterIp = node_ips.begin();
         auto iterPort = node_ports.begin();
         for (unsigned int i = 0; i < connected_nodes; i++) {
@@ -135,7 +131,6 @@ namespace Packet {
     void HandShake::ContinueBuild(ReadCTX *ctx) {
         unsigned int il, kl, cn;
         uint16_t p;
-        // state for parse length
         if (state == 0 && CTXGetsz(ctx) >= 2) {
             CTXRead(ctx, (char *)&p, 2);
             port = ntohs(p);
@@ -147,7 +142,6 @@ namespace Packet {
             id_length = ntohl(il);
             state = 2;
         }
-        // state for parse message
         if (state == 2 && CTXGetsz(ctx) >= id_length) {
             id = (char *)calloc(1, id_length + 1);
             CTXRead(ctx, id, id_length);
@@ -177,7 +171,6 @@ namespace Packet {
                 CTXRead(ctx, (char *)&temp16, 2);
                 node_ips.push_back(ntohl(temp32));
                 node_ports.push_back(ntohs(temp16));
-                endwin();
             }
             // Release unused buffer
             CTXDiscard(ctx);

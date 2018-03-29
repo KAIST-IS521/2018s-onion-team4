@@ -4,30 +4,28 @@
 #include "cui.hh"
 
 namespace CUIHelper {
-
     void initialize(string uid, string infos, char *msg) {
-        cout << "Please enter the Github ID and user information to unlock" << endl;
-        cout << "the OpenPGP secret key for user:" << endl;
-        cout << "\"" << uid << "\", " << infos << endl;
-        if(msg)
+        cout << "Please enter the Github ID and user information to unlock"
+             << endl << "the OpenPGP secret key for user:" << endl
+             << "\"" << uid << "\", " << infos << endl;
+        if (msg)
             cout << msg << endl;
     }
 
-    string getID() {
+    string getID(void) {
         string input_id = "";
         do {
             cout << "Enter the Github Id:";
-            getline(cin, input_id);
             cout.flush();
+            getline(cin, input_id);
         } while (input_id.empty() || input_id.length() > MAX_ID_LEN);
 
         return input_id;
     }
 
-    string getPw()  {
+    string getPW(void)  {
         char* input_pw;
         input_pw = getpass("Enter Passphrase: ");
-
         return input_pw;
     }
 }
@@ -44,7 +42,7 @@ namespace CUI {
         CUIHelper::initialize(uid, infos, msg);
 
         string id = CUIHelper::getID();
-        string pw = CUIHelper::getPw();
+        string pw = CUIHelper::getPW();
 
         return pair<string, string>(id, pw);
     }
@@ -57,8 +55,9 @@ namespace CUI {
             cout << prompt;
             getline(cin, input);
             cout.flush();
-            if(!input.empty())
+            if (!input.empty()) {
                 handler((char *)input.c_str(), aux);
+            }
         }
     }
 
@@ -87,6 +86,6 @@ namespace CUI {
     }
 
     void CUIProvider::Clear(void) {
-        system("clear");
+        system("/usr/bin/clear");
     }
 }
