@@ -7,8 +7,11 @@
 #include <locale.h>
 #include <errno.h>
 #include <mutex>
+#include <fcntl.h>
 
 using namespace std;
+
+#define TEMP_LEN 16
 
 namespace PGP {
     #define fail_if_err(err) do {\
@@ -32,11 +35,9 @@ namespace PGP {
 
             void ImportKey(string pubkey);
             void ImportSecretKey(string prikey);
-            void get_passphrase_info(void);
             void InitPrikey(string prikey);
             void InitPubkey(string pubkey);
-            void InitCTX();
-            void setPass();
+
         public:
             PGP(string pubkey, string prikey);
             PGP(string pubkey);

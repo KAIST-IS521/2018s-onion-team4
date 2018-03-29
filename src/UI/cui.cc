@@ -68,9 +68,25 @@ namespace CUI {
         lock.unlock();
     }
 
-    void CUIProvider::PushError(char *msg) {
+    void CUIProvider::PushError(string msg) {
         lock.lock();
         cout << msg << endl;
         lock.unlock();
+    }
+
+    void CUIProvider::PushChat(string sender, string msg) {
+        lock.lock();
+        cout << "[ " << sender << " ]\t" << msg << endl;
+        lock.unlock();
+    }
+
+    void CUIProvider::PushNotification(string msg) {
+        lock.lock();
+        cout << msg << endl;
+        lock.unlock();
+    }
+
+    void CUIProvider::Clear(void) {
+        system("clear");
     }
 }

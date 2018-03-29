@@ -21,7 +21,11 @@ namespace CUI
 
             // add Lock!
             void PushMessage(char *msg);
-            void PushError(char *msg);
+            void PushError(string msg);
+            void PushChat(string user, string msg);
+            void PushNotification(string msg);
+            void Clear(void);
+
             CUIProvider();
             ~CUIProvider();
     };

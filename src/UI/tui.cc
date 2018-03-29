@@ -259,6 +259,13 @@ namespace TUIImplement {
         wrefresh(inputWin);
         beep();
     }
+    static void writeChat(string data) {
+        wprintw(chatWin, "%s\n", data.c_str());
+        wrefresh(chatWin);
+        wcursyncup(inputWin);
+        wrefresh(inputWin);
+        beep();
+    }
 
     static void drawInputWin() {
        // Create input box and window
@@ -309,6 +316,13 @@ namespace TUIImplement {
         }
         return input;
     }
+    
+    void Welcome(void) {
+        wattron(TUIImplement::chatWin, COLOR_PAIR(3));
+        TUIImplement::writeChat("Welcome to VOM!");
+        TUIImplement::writeChat("Please enter \"/h\" or \"/help\" to get more information.\n");
+        wattron(TUIImplement::chatWin, COLOR_PAIR(1));
+    }
 
     void drawOnionChatUI(const char *uid, const char *keyid,
             void (*handler)(char *, void *), void *aux)
@@ -322,6 +336,7 @@ namespace TUIImplement {
         drawInputWin();
         wcursyncup(inputWin);
         wrefresh(inputWin);
+        Welcome();
         while (true) {
             char *userin = handleInput();
             if (userin) {
@@ -364,7 +379,32 @@ namespace TUI
         TUIImplement::writeChat(msg);
         msgLock.unlock();
     }
+    
+    void TUIProvider::PushChat(string sender, string msg){
+        msgLock.lock();
+        string m = "[ " + sender + " ]\t" + msg;
+        TUIImplement::writeChat(m);
+        msgLock.unlock();
+    }
 
-    void TUIProvider::PushError(char *msg) {
+    void TUIProvider::PushNotification(string msg){
+        msgLock.lock();
+        wattron(TUIImplement::chatWin, COLOR_PAIR(3));
+        TUIImplement::writeChat(msg);
+        wattron(TUIImplement::chatWin, COLOR_PAIR(1));
+        msgLock.unlock();
+    }
+
+    void TUIProvider::PushError(string msg) {
+        msgLock.lock();
+        wattron(TUIImplement::chatWin, COLOR_PAIR(4));
+        TUIImplement::writeChat(msg);
+        wattron(TUIImplement::chatWin, COLOR_PAIR(1));
+        msgLock.unlock();
+    }
+
+    void TUIProvider::Clear(void) {
+        wclear(TUIImplement::chatWin);
+        wrefresh(TUIImplement::chatWin);
     }
 }

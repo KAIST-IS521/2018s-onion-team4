@@ -3,9 +3,9 @@
 
 Onion Messenger
 -----
-Onion messenger is the messenger service that inspired by onion routing.
+Onion messenger is the messenger service that is inspired by onion routing.
 
-It use PGP for encrypt or decrypt messages.
+It uses PGP to encrypt or decrypt messages.
 
 Also, our messenger provides ascii art feature! You can send your favorite picture to others.
 
@@ -48,9 +48,9 @@ Architecture
   * Thread #1: UI handler.
   * Thread #2: Packet handler.
   * On demand thread for PGP encrypt and decrypt.
-- Distribute System: No `single point of failure`.
+- Distributed System: No `single point of failure`.
 - IO multiplexing with `select`: Can handle lots of clients.
-- Onion routing with PGP: All of your messages cannot sniffed. Also no one know who is sender and who is reciever except you and reciver.
+- Onion routing with PGP: All of your messages cannot be sniffed. Also, no one knows who is the sender and who is the receiver except you and receiver.
 
 Protocol
 -----
