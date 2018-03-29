@@ -7,6 +7,8 @@
 #include <string>
 #include <spawn.h>
 #include <unistd.h>
+#include <iostream>
+
 using namespace std;
 
 namespace Features {
@@ -72,9 +74,10 @@ namespace Features {
     string Asciiart(const char *filepath) {
         string path = "/bin/go/bin/goasciiart " ;
         string result= "";
-        path.append(filepath).append(" -w 80");
+        path.append(" -p ").append(filepath).append(" -w 80");
         char buf[1024];
         FILE *fp=NULL;
+        cout << path << endl;
         fp=popen((char*)path.c_str(),"r");
         if (fp) {
             while ((fgets(buf,1024,fp)) != NULL) {
