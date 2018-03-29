@@ -20,8 +20,7 @@ namespace User {
                 int GetFd(void) { return fd; };
                 string Encrypt(string msg) { return pgp->Encrypt(msg); };
                 Rep(string pk, string id, uint32_t ip, uint16_t port, int fd);
-                ~Rep();
+                ~Rep(void);
         };
 }
-
 #endif

@@ -7,15 +7,6 @@
 #include <string>
 #include <getopt.h>
 
-FILE* log_f;
-bool debug = false;
-void d(string s){
-    if (debug) {
-        fwrite(s.c_str(), s.size(), 1, log_f);
-        fflush(log_f);
-    }
-}
-
 using namespace std;
 void usage(char *progname) {
     cout << "Usage: " << progname << " [Options]" << endl
@@ -50,10 +41,9 @@ int main(int argc, char **argv) {
         {"pub",   required_argument, 0, 'b'},
         {"port",  required_argument, 0, 'p'},
         {"help",  no_argument, 0, 'h'},
-        {"debug", no_argument, 0, 'g'},
         {0, 0, 0, 0}
     };
-    while (-1 != (c = getopt_long(argc, argv, "n:s:b:p:h:g",
+    while (-1 != (c = getopt_long(argc, argv, "n:s:b:p:h:",
                                   long_options, NULL))) {
         switch (c) {
             case 0:
@@ -77,9 +67,6 @@ int main(int argc, char **argv) {
             case 'p':
                 port = atoi(optarg);
                 break;
-            case 'g':
-                debug = true;
-                break;
             case 'h':
             case '?':
                 usage(argv[0]);
@@ -101,9 +88,7 @@ int main(int argc, char **argv) {
         cerr << argv[0] << ": " << priv << " : No such file." << endl;
         exit(1);
     }
-    if (debug) {
-        log_f = fopen("./log", "a+");
-    }
+
     string privData((std::istreambuf_iterator<char>(privkey)),
                      std::istreambuf_iterator<char>());
     string pubData((std::istreambuf_iterator<char>(pubkey)),

@@ -66,6 +66,7 @@ namespace Features {
         if (file.is_open() && download(url, &file)) {
             return Asciiart(filepath.c_str());
         }
+        return "";
     }
 
     string Asciiart(const char *filepath) {

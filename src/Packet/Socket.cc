@@ -11,14 +11,11 @@ namespace Socket {
       struct sockaddr_in client_addr;
 
       client_fd = socket(AF_INET, SOCK_STREAM, 0);
-
       client_addr.sin_addr.s_addr = ip;
       client_addr.sin_family = AF_INET;
       client_addr.sin_port = htons(port);
-
       if (connect(client_fd, (struct sockaddr *)&client_addr,
-                  sizeof(client_addr)) == -1)
-      {
+                  sizeof(client_addr)) == -1) {
           close(client_fd);
           return -1;
       }
@@ -39,19 +36,6 @@ namespace Socket {
     socklen_t len = sizeof(struct sockaddr_in);
 
     getpeername(fd, (struct sockaddr *)&temp_addr, &len);
-
     return ntohl(temp_addr.sin_addr.s_addr);
   }
-
-  // SHOULD CHANGE!
-  uint16_t GetPort(int fd) {
-    struct sockaddr_in temp_addr;
-    socklen_t len = sizeof(struct sockaddr_in);
-
-    getpeername(fd, (struct sockaddr *)&temp_addr, &len);
-
-    return ntohs(temp_addr.sin_port);
-  }
 }
-
-

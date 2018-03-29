@@ -11,7 +11,6 @@
 #define MSG 1
 
 using namespace std;
-void d(string s);
 
 
 namespace Packet {
@@ -71,7 +70,7 @@ namespace Packet {
             void ContinueBuild(ReadCTX *ctx);
             Msg(int t) : Packet(MSG, t) { };
             Msg(string msg);
-            ~Msg(void);
+            ~Msg(void) { };
     };
 
     Packet *Unserialize(ReadCTX *ctx);

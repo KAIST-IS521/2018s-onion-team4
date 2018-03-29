@@ -12,8 +12,8 @@ namespace CUI
 {
     class CUIProvider : public UI::UIProvider
     {
-		private:
-			mutex lock;
+        private:
+            mutex lock;
         public:
             pair<string, string> GetUserInfo(string uid, string info, char *msg);
             void UserInputLoop(string uid, string keyid,
@@ -26,9 +26,12 @@ namespace CUI
             void PushNotification(string msg);
             void Clear(void);
 
-            CUIProvider();
-            ~CUIProvider();
+            // TODO
+            void AddUser(string user) { };
+            void RemoveUser(string user) { };
+
+            CUIProvider(void);
+            ~CUIProvider(void);
     };
 }
-
 #endif

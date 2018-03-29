@@ -18,6 +18,9 @@ namespace UI {
             virtual void PushChat(string user, string msg) = 0;
             virtual void PushNotification(string msg) = 0;
             virtual void Clear(void) = 0;
+
+            virtual void AddUser(string user) = 0;
+            virtual void RemoveUser(string user) = 0;
     };
 }
 #endif
