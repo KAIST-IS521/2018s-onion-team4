@@ -3,6 +3,7 @@
 
 #define MAX_ID_LEN 30
 #include <iostream>
+#include <list>
 #include <mutex>
 #include "UIProvider.hh"
 
@@ -14,6 +15,9 @@ namespace TUI
     {
         private:
             mutex msgLock;
+            mutex userLock;
+            list<string> users;
+            void RenderUsers(void);
         public:
             pair<string, string> GetUserInfo(string uid, string info, char *msg);
             void UserInputLoop(string uid, string keyid,
@@ -25,6 +29,8 @@ namespace TUI
             void PushChat(string user, string msg);
             void PushNotification(string msg);
             void Clear(void);
+            void AddUser(string user);
+            void RemoveUser(string user);
             TUIProvider();
             ~TUIProvider();
     };

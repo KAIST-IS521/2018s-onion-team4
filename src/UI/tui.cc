@@ -128,9 +128,17 @@ namespace TUIImplement {
         int ch;
 
         inputBoxBuilder(id, 0, state);
-        while ((ch = getch()) != '\n') {
+        while (true) {
+            if ((ch = getch()) == '\n') {
+                if (state == INPUT_ID) {
+                    state = INPUT_PASS;
+                } else {
+                    break;
+                }
+            }
             // Backspace
-            if (ch == 8 || ch == 127 || ch == KEY_BACKSPACE) {
+            if (ch == '\n') {
+            } else if (ch == 8 || ch == 127 || ch == KEY_BACKSPACE) {
                 if (state == INPUT_ID) {
                     if (idlen > 0) {
                         id = (char *)realloc(id, --idlen + 1);
@@ -153,13 +161,15 @@ namespace TUIImplement {
                     wcursyncup(idWin);
                     state = INPUT_ID;
                 }
-            } else if (ch == KEY_RIGHT) {
+            } else if (ch == KEY_RIGHT || ch == '\t') {
                 if (state == INPUT_OK) {
                     state = INPUT_CANCEL;
                 } else if (state == INPUT_PASS) {
                     state = INPUT_OK;
                 } else if (state == INPUT_ID) {
                     state = INPUT_PASS;
+                } else if (ch == '\t' && state == INPUT_CANCEL) {
+                    state = INPUT_ID;
                 }
             } else if (ch == KEY_UP) {
                 if (state == INPUT_OK || state == INPUT_CANCEL) {
@@ -211,7 +221,7 @@ namespace TUIImplement {
         mvwaddstr(infoWin, 0, 2,
                 "Please enter the Github ID and user information to unlock " \
                 "the OpenPGP secret key for user:");
-        
+
         mvwaddstr(infoWin, 2, 2, "\"");
         mvwaddstr(infoWin, 2, 3, uid);
         mvwaddstr(infoWin, 2, 3 + strlen(uid), "\", ");
@@ -230,8 +240,8 @@ namespace TUIImplement {
         return handleUserInfo();
     }
 
-    WINDOW *inputWin, *chatWin, *infoLineWin;
-    WINDOW *topLine, *botLine;
+    WINDOW *inputWin, *chatWin, *infoLineWin, *listWin;
+    WINDOW *topLine, *botLine, *listWinBox;
 
     static void drawChatWin(char *user) {
         topLine = subwin(mainWin, 1, COLS, 0, 0);
@@ -240,19 +250,33 @@ namespace TUIImplement {
         wbkgd(botLine, COLOR_PAIR(9));
         mvwaddstr(botLine, 0, COLS - strlen(user), user);
 
-       chatWin = subwin(mainWin, LINES - 3, COLS, 1, 0);
-
+       listWinBox = subwin(mainWin, LINES - 3, COLS * 0.2, 1, 0);
+       listWin = subwin(mainWin, LINES - 3, COLS * 0.2 - 2, 1, 1);
+       wmove(listWinBox, 0, COLS * 0.2 - 1);
+       wvline(listWinBox, '|', LINES - 3);
+       chatWin = subwin(mainWin, LINES - 2, COLS * 0.8, 1, COLS * 0.2);
        mvwaddstr(topLine, 0, 0, " Onion Messenger");
 
        // Enable text scrolling
        scrollok(chatWin, TRUE);
+       wrefresh(listWin);
+       wrefresh(listWinBox);
        wrefresh(chatWin);
        wrefresh(topLine);
        wrefresh(botLine);
        wrefresh(mainWin);
     }
 
-    static void writeChat(char *data) {
+    static void listUsers(const char **users, int size) {
+        wclear(listWin);
+        wmove(listWin, 0, 0);
+        for (int i = 0; i < size; i++) {
+            wprintw(listWin, "%s\n", users[i]);
+        }
+        wrefresh(listWin);
+    }
+
+    static void writeChat(const char *data) {
         wprintw(chatWin, "%s\n", data);
         wrefresh(chatWin);
         wcursyncup(inputWin);
@@ -288,8 +312,7 @@ namespace TUIImplement {
         wrefresh(inputWin);
     }
 
-    static char *handleInput()
-    {
+    static char *handleInput() {
         char *input = 0;
         int len = 0;
         int ch;
@@ -316,17 +339,17 @@ namespace TUIImplement {
         }
         return input;
     }
-    
+
     void Welcome(void) {
         wattron(TUIImplement::chatWin, COLOR_PAIR(3));
         TUIImplement::writeChat("Welcome to VOM!");
-        TUIImplement::writeChat("Please enter \"/h\" or \"/help\" to get more information.\n");
+        TUIImplement::writeChat("Please enter \"/h\" or \"/help\" "
+                                "to get more information.\n");
         wattron(TUIImplement::chatWin, COLOR_PAIR(1));
     }
 
     void drawOnionChatUI(const char *uid, const char *keyid,
-            void (*handler)(char *, void *), void *aux)
-    {
+            void (*handler)(char *, void *), void *aux) {
         wclear(mainWin);
         wrefresh(mainWin);
         char msg[100];
@@ -379,7 +402,7 @@ namespace TUI
         TUIImplement::writeChat(msg);
         msgLock.unlock();
     }
-    
+
     void TUIProvider::PushChat(string sender, string msg){
         msgLock.lock();
         string m = "[ " + sender + " ]\t" + msg;
@@ -404,7 +427,34 @@ namespace TUI
     }
 
     void TUIProvider::Clear(void) {
+        msgLock.lock();
         wclear(TUIImplement::chatWin);
         wrefresh(TUIImplement::chatWin);
+        msgLock.unlock();
+    }
+
+    void TUIProvider::RenderUsers(void) {
+        auto holder = (const char **)calloc(sizeof(const char *), users.size());
+        int i = 0;
+        for (auto u : users) {
+            holder[i] = u.c_str();
+            i++;
+        }
+        TUIImplement::listUsers(holder, users.size());
+        free(holder);
+    }
+
+    void TUIProvider::AddUser(string user) {
+        userLock.lock();
+        users.push_front(user);
+        RenderUsers();
+        userLock.unlock();
+    }
+
+    void TUIProvider::RemoveUser(string user) {
+        userLock.lock();
+        users.remove_if([user] (string &x) { return !x.compare(user); });
+        RenderUsers();
+        userLock.unlock();
     }
 }
