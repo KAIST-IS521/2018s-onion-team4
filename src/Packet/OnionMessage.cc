@@ -43,16 +43,16 @@ namespace Message {
     // XXX: Section for ImgLayer
     string ImgLayer::Serialize(User::Rep *rep) {
         PacketBuilder::Builder builder;
-        builder << (uint8_t)MSGLAYER
+        builder << (uint8_t)IMGLAYER
                 << htonl(sender.size())
                 << sender
                 << url;
         return rep->Encrypt(builder.Finalize());
     }
 
-    ImgLayer::ImgLayer(string _sender, string url) : MsgBody(IMGLAYER) {
+    ImgLayer::ImgLayer(string _sender, string _url) : MsgBody(IMGLAYER) {
         sender = _sender;
-        url = url;
+        url = _url;
     }
 
     MsgBody *Unserialize(string data) {
