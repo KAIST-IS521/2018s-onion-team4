@@ -30,8 +30,8 @@ namespace CUI
             void AddUser(string user) { };
             void RemoveUser(string user) { };
 
-            CUIProvider();
-            ~CUIProvider();
+            CUIProvider(void);
+            ~CUIProvider(void);
     };
 }
 #endif

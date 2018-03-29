@@ -46,7 +46,7 @@ namespace PGP {
         remove(path.c_str());
     }
 
-    void PGP::ImportSecretKey(string key){
+    void PGP::ImportSecretKey(string key) {
         char temp[] = "/tmp/dataXXXXXX";
         int keyfd = mkstemp(temp);
         write(keyfd, key.c_str(), key.size());
