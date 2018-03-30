@@ -61,7 +61,7 @@ namespace Features {
     string DisplayAArt(string url) {
         char fname[15] = "out_XXXXXX\0";
         mkstemp(fname);
-        string filepath = "/root/";
+        string filepath = "/root/image/";
         filepath.append(fname).append(".jpg");
         ofstream file(filepath);
 
