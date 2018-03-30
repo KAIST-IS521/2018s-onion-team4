@@ -72,7 +72,7 @@ namespace Features {
     }
 
     string Asciiart(const char *filepath) {
-        string path = "/bin/go/bin/goasciiart " ;
+        string path = "/usr/bin/bin/goasciiart " ;
         string result= "";
         path.append(" -p ").append(filepath).append(" -w 80");
         char buf[1024];
