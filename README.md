@@ -33,8 +33,6 @@ Command line
 `/msg [Github_ID] [msg]` or `/m [Github_ID] [msg]`
 - Geturl to asciiart
 `/img [Github_ID] [url]` or `/i [Github_ID] [url]`
-- Clear screen
-`/clr`
 - Help message
 `/help`
 
