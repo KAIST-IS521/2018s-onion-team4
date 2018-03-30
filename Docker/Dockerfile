@@ -11,6 +11,7 @@ RUN DIST=xenial && \
 RUN apt-get install -y ca-certificates
 RUN apt-get install -y golang-go
 RUN apt-get install -y apt-utils
+RUN apt-get install -y gccgo-go
 ADD team4.sh /root/team4.sh
 RUN chmod +x /root/team4.sh
 RUN rm -rf /var/lib/apt/lists/* && \
@@ -18,6 +19,6 @@ RUN rm -rf /var/lib/apt/lists/* && \
 
 
 WORKDIR /root
-ENV GOPATH /bin/go
+ENV GOPATH /usr/bin
 ENV PATH $PATH:$GOPATH/bin
 CMD ["/root/team4.sh"]
