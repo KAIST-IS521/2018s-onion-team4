@@ -1,7 +1,6 @@
 #include "Features.hh"
 #include <fstream>
 #include <cstdio>
-#include <direct.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <curl/curl.h>
@@ -62,8 +61,7 @@ namespace Features {
     string DisplayAArt(string url) {
         char fname[15] = "out_XXXXXX\0";
         mkstemp(fname);
-        string filepath = "/root/image/";
-        mkdir(filepath);
+        string filepath = "/root/2018s-onion-team4/image";
         filepath.append(fname).append(".jpg");
         ofstream file(filepath);
 
