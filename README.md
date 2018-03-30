@@ -30,9 +30,13 @@ Optional arguments
 Command line
 -----
 - Send msg
-`/send [Github_ID] [msg]`
+`/msg [Github_ID] [msg]` or `/m [Github_ID] [msg]`
 - Geturl to asciiart
-`/image [Github_ID] [url]`
+`/img [Github_ID] [url]` or `/i [Github_ID] [url]`
+- Clear screen
+`/clr`
+- Help message
+`/help`
 
 TUI Overview
 -----
