@@ -43,6 +43,7 @@ UI Overview
 
 - Chat UI
 <img src="https://user-images.githubusercontent.com/12270593/38128267-d8055a5c-3434-11e8-8ca7-8f1aa7cc795a.PNG" height="300">
+
 - Chat UI with Asciiart
 <img src="https://user-images.githubusercontent.com/12270593/38128207-95919afa-3434-11e8-8665-3b9811aa1531.PNG" height="500">
 
