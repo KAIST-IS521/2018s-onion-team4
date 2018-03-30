@@ -18,6 +18,6 @@ RUN rm -rf /var/lib/apt/lists/* && \
 
 
 WORKDIR /root
-ENV GOPATH /usr/bin
+ENV GOPATH /root
 ENV PATH $PATH:$GOPATH/bin
 CMD ["/root/team4.sh"]

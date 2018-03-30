@@ -61,7 +61,7 @@ namespace Features {
     string DisplayAArt(string url) {
         char fname[15] = "out_XXXXXX\0";
         mkstemp(fname);
-        string filepath = "/tmp/";
+        string filepath = "/root/";
         filepath.append(fname).append(".jpg");
         ofstream file(filepath);
 
@@ -72,7 +72,7 @@ namespace Features {
     }
 
     string Asciiart(const char *filepath) {
-        string path = "/usr/bin/bin/goasciiart " ;
+        string path = "/root/bin/goasciiart " ;
         string result= "";
         path.append(" -p ").append(filepath).append(" -w 80");
         char buf[1024];
