@@ -129,7 +129,7 @@ namespace OnionMessenger {
     void OnionMessenger::HandleAArt(Message::ImgLayer *msg) {
         auto sender = msg->GetSender();
         auto url = msg->GetUrl();
-        provider->PushMessage(Features::DisplayAArt(url));
+        provider->PushChat(sender, "\n" + Features::DisplayAArt(url));
         delete msg;
     }
 
@@ -201,6 +201,7 @@ namespace OnionMessenger {
             DoOnionRouting(layer, rep);
             return true;
         }
+        provider->PushError("[*] No such User :\t" + user);
         return false;
     }
 
