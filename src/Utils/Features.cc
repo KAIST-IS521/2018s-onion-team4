@@ -1,6 +1,7 @@
 #include "Features.hh"
 #include <fstream>
 #include <cstdio>
+#include <direct.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <curl/curl.h>
@@ -62,6 +63,7 @@ namespace Features {
         char fname[15] = "out_XXXXXX\0";
         mkstemp(fname);
         string filepath = "/root/image/";
+        mkdir(filepath);
         filepath.append(fname).append(".jpg");
         ofstream file(filepath);
 
