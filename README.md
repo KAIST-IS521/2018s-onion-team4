@@ -34,7 +34,7 @@ Command line
 - Geturl to asciiart
 `/img [Github_ID] [url]` or `/i [Github_ID] [url]`
 - Help message
-`/help`
+`/help` or `/h`
 
 UI Overview
 -----
