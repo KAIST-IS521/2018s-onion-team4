@@ -197,12 +197,13 @@ namespace OnionMessenger {
 
     bool OnionMessenger::SendImgAsync(string url, string user) {
         if (users.find(user) != users.end()) {
+            provider->PushChat("You -> " + user, "Send image (" + url + ")");
             auto rep = users[user];
             auto layer = new Message::ImgLayer(ID, url);
             DoOnionRouting(layer, rep);
             return true;
         }
-        provider->PushError("[*] No such User :\t" + user);
+        provider->PushError("[*] No such user :\t" + user);
         return false;
     }
 
