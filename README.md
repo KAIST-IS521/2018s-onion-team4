@@ -92,6 +92,6 @@ Team Member & Role
 | Name        | Role                     |
 |-------------|--------------------------|
 | Hyunki Kim  | Features & docs & Docker |
-| Hongsik Kim | PGP & Features           |
+| Hongsik Kim | PGP & Features & Routing |
 | Heeseok Kim | CUI                      |
 | Minkyu Jung | All components           |
