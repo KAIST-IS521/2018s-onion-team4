@@ -185,6 +185,7 @@ namespace OnionMessenger {
 
     bool OnionMessenger::SendMsgAsync(string msg, string user) {
         if (users.find(user) != users.end()) {
+            provider->PushChat("You -> " + user, msg);
             auto rep = users[user];
             auto layer = new Message::MsgLayer(ID, msg);
             DoOnionRouting(layer, rep);
