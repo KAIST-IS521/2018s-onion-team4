@@ -11,7 +11,12 @@ Also, our messenger provides ascii art feature! You can send your favorite pictu
 
 Build & Run
 -----
+You can run our messenger in your own environment.
+
 ```sh
+$ sudo apt install libncurses-dev libcurl4-openssl-dev g++ \
+  golang-go apt-utils apt-utils
+$ go get github.com/stdupp/goasciiart
 $ make
 $ ./OnionMessenger --help  # to show options
 Usage: ./OnionMessenger [Options]
@@ -25,8 +30,10 @@ Optional arguments
   --notui    : Not use TUI
   --node, -n : Another client's IP
   --help, -h : Show this message
-
 ```
+
+or use [docker](Docker/)!
+
 Command line
 -----
 - Send msg
@@ -55,7 +62,8 @@ Architecture
   * On demand thread for PGP encrypt and decrypt.
 - Distributed System: No `single point of failure`.
 - IO multiplexing with `select`: Can handle lots of clients.
-- Onion routing with PGP: All of your messages cannot be sniffed. Also, no one knows who is the sender and who is the receiver except you and receiver.
+- Onion routing with PGP: All of your messages cannot be sniffed.
+Also, no one knows who is the sender and who is the receiver except you and receiver.
 
 Protocol
 -----
@@ -81,9 +89,9 @@ ImageLayer: `| 2 (uint8_t) | Url |`
 
 Team Member & Role
 -----
-| Name        | Role                    |
-|-------------|-------------------------|
-| Hyunki Kim  | PGP & Features          |
-| Hongsik Kim | PGP & Features          |
-| Heeseok Kim | Protocol                |
-| Minkyu Jung | Client & Protocol && UI |
+| Name        | Role                     |
+|-------------|--------------------------|
+| Hyunki Kim  | Features & docs & Docker |
+| Hongsik Kim | PGP & Features           |
+| Heeseok Kim | CUI                      |
+| Minkyu Jung | All components           |
