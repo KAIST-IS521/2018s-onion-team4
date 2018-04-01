@@ -77,7 +77,6 @@ namespace Features {
         path.append(" -p ").append(filepath).append(" -w 80");
         char buf[1024];
         FILE *fp=NULL;
-        cout << path << endl;
         fp=popen((char*)path.c_str(),"r");
         if (fp) {
             while ((fgets(buf,1024,fp)) != NULL) {
