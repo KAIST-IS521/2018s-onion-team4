@@ -126,6 +126,9 @@ namespace PGP {
         close(datafd);
 
         string result = "";
+        // In this case, string(passphrase) not filtering anything
+        // It cause command injection
+        // And Logically, it is not possible to process special characters.(e.g. !, @)
         string command = "echo " + string(passphrase) + \
                          " | /usr/bin/gpg --armor --no-tty --passphrase-fd 0 " \
                          "--decrypt " + path + " 2>/dev/null";
