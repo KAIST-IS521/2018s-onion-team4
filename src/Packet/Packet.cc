@@ -10,6 +10,7 @@
 #include "Packet.hh"
 #include "PacketBuilder.hh"
 
+// The assumption is that the input value is always correct for the protocol.
 namespace Packet {
     // XXX: PACKET INTERFACE
     Packet* Unserialize(ReadCTX *ctx) {
